@@ -1,0 +1,5 @@
+project_name: allele-specific-expression
+license: MIT
+repo_type: git
+repo_server: github.com
+repo_account: icgc-argo-rna-wg
