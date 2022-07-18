@@ -48,8 +48,15 @@ params.container_version = ""
 params.container = ""
 
 // tool specific parmas go here, add / change as needed
-params.input_file = ""
-params.expected_output = ""
+params.bam = ""
+params.bai = ""
+params.vcf = ""
+params.idx = ""
+params.fa = ""
+params.fai = ""
+params.gzi = ""
+params.dict = ""
+params.expected_output  = ""
 
 include { aseReadCounter } from '../main'
 
@@ -81,15 +88,28 @@ process file_smart_diff {
     """
 }
 
-
 workflow checker {
   take:
-    input_file
+    bam
+    bai
+    vcf
+    idx
+    fa
+    fai
+    gzi
+    dict
     expected_output
 
   main:
     aseReadCounter(
-      input_file
+      bam,
+      bai,
+      vcf,
+      idx,
+      fa,
+      fai,
+      gzi,
+      dict
     )
 
     file_smart_diff(
@@ -98,10 +118,16 @@ workflow checker {
     )
 }
 
-
 workflow {
   checker(
-    file(params.input_file),
+    file(params.bam),
+    file(params.bai),
+    file(params.vcf),
+    file(params.idx),
+    file(params.fa),
+    file(params.fai),
+    file(params.gzi),
+    file(params.dict),
     file(params.expected_output)
   )
 }

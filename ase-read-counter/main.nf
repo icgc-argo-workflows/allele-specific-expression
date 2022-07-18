@@ -49,9 +49,17 @@ params.publish_dir = ""  // set to empty string will disable publishDir
 
 
 // tool specific parmas go here, add / change as needed
-params.input_file = ""
-params.output_pattern = "*"  // output file name pattern
-
+params.bam = ""
+params.bai = ""
+params.vcf = ""
+params.idx = ""
+params.fa = ""
+params.fai = ""
+params.gzi = ""
+params.dict = ""
+params.min_depth = 8
+params.min_mapping_quality = 20
+params.min_base_quality = 10
 
 process aseReadCounter {
   container "${params.container ?: container[params.container_registry ?: default_container_registry]}:${params.container_version ?: version}"
@@ -61,21 +69,26 @@ process aseReadCounter {
   memory "${params.mem} GB"
 
   input:  // input, make update as needed
-    path input_file
+    path(bam)
+    path(bai)
+    path(vcf)
+    path(idx)
+    path(fa)
+    path(fai)
+    path(gzi)
+    path(dict)
 
   output:  // output, make update as needed
-    path "output_dir/${params.output_pattern}", emit: output_file
+    path("${bam.baseName}.read"), emit: output_file
 
   script:
     // add and initialize variables here as needed
 
     """
-    mkdir -p output_dir
-
-    main.py \
-      -i ${input_file} \
-      -o output_dir
-
+    gatk ASEReadCounter -R $fa -I $bam -V $vcf -O ${bam.baseName}.read \
+        --min-depth-of-non-filtered-base $params.min_depth \
+        --min-mapping-quality $params.min_mapping_quality \
+        --min-base-quality $params.min_base_quality
     """
 }
 
@@ -84,6 +97,13 @@ process aseReadCounter {
 // using this command: nextflow run <git_acc>/<repo>/<pkg_name>/<main_script>.nf -r <pkg_name>.v<pkg_version> --params-file xxx
 workflow {
   aseReadCounter(
-    file(params.input_file)
+    file(params.bam),
+    file(params.bai),
+    file(params.vcf),
+    file(params.idx),
+    file(params.fa),
+    file(params.fai),
+    file(params.gzi),
+    file(params.dict)
   )
 }

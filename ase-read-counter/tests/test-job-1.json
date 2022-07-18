@@ -1,6 +1,13 @@
 {
-    "input_file": "input/test_rg_3.bam",
-    "expected_output": "expected/expected.test_rg_3.bam",
+    "bam": "input/sim_sample1.bam",
+    "bai": "input/sim_sample1.bam.bai",
+    "vcf": "input/sim_sample1.filtered.vcf",
+    "idx": "input/sim_sample1.filtered.vcf.idx",
+    "fa": "input/sim_ref.fa.gz",
+    "fai": "input/sim_ref.fa.gz.fai",
+    "gzi": "input/sim_ref.fa.gz.gzi",
+    "dict": "input/sim_ref.dict",
+    "expected_output": "expected/expected_sim_sample1.read",
     "publish_dir": "outdir",
     "cpus": 1,
     "mem": 0.5
