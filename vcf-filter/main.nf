@@ -47,11 +47,8 @@ params.cpus = 1
 params.mem = 1  // GB
 params.publish_dir = ""  // set to empty string will disable publishDir
 
-
 // tool specific parmas go here, add / change as needed
-params.input_file = ""
-params.output_pattern = "*"  // output file name pattern
-
+params.vcf_file = ""
 
 process vcfFilter {
   container "${params.container ?: container[params.container_registry ?: default_container_registry]}:${params.container_version ?: version}"
@@ -60,22 +57,20 @@ process vcfFilter {
   cpus params.cpus
   memory "${params.mem} GB"
 
-  input:  // input, make update as needed
-    path input_file
+  input: 
+    path(vcf_file)
 
-  output:  // output, make update as needed
-    path "output_dir/${params.output_pattern}", emit: output_file
-
+  output:
+    path("${vcf_file.baseName}.filtered.vcf"), emit: output_file
+    
   script:
-    // add and initialize variables here as needed
-
+    cat_cmd = "$vcf_file".endsWith(".gz") ? "zcat" : "cat"
     """
-    mkdir -p output_dir
-
-    main.py \
-      -i ${input_file} \
-      -o output_dir
-
+    $cat_cmd $vcf_file |
+    cut -f 1,2 | 
+    sort -k1,1V -k2,2n |
+    uniq -u > chr_file      
+    bcftools view $vcf_file --min-alleles 2 --max-alleles 2 -T chr_file -O v -o ${vcf_file.baseName}.filtered.vcf
     """
 }
 
@@ -84,6 +79,6 @@ process vcfFilter {
 // using this command: nextflow run <git_acc>/<repo>/<pkg_name>/<main_script>.nf -r <pkg_name>.v<pkg_version> --params-file xxx
 workflow {
   vcfFilter(
-    file(params.input_file)
+    file(params.vcf_file)
   )
 }

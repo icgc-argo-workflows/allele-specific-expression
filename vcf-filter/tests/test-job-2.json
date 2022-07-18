@@ -1,6 +1,6 @@
 {
-    "input_file": "input/test_rg_3.bam",
-    "expected_output": "expected/expected.test_rg_3.bam",
+    "vcf_file": "input/sim_sample1.vcf",
+    "expected_output": "expected/expected.sim_sample1.filtered.vcf",
     "publish_dir": "outdir",
     "container_registry": "ghcr.io",
     "cpus": 1,
