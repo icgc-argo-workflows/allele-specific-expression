@@ -50,32 +50,20 @@ params.publish_dir = ""  // set to empty string will disable publishDir
 
 // tool specific parmas go here, add / change as needed
 params.input_file = ""
-params.output_pattern = "*"  // output file name pattern
-
 
 process samIndex {
   container "${params.container ?: container[params.container_registry ?: default_container_registry]}:${params.container_version ?: version}"
   publishDir "${params.publish_dir}/${task.process.replaceAll(':', '_')}", mode: "copy", enabled: params.publish_dir
 
-  cpus params.cpus
-  memory "${params.mem} GB"
+  input:
+    path(bam)
 
-  input:  // input, make update as needed
-    path input_file
-
-  output:  // output, make update as needed
-    path "output_dir/${params.output_pattern}", emit: output_file
+  output:
+    path("${bam}.bai"), emit: output_file
 
   script:
-    // add and initialize variables here as needed
-
     """
-    mkdir -p output_dir
-
-    main.py \
-      -i ${input_file} \
-      -o output_dir
-
+    samtools index $bam 
     """
 }
 
