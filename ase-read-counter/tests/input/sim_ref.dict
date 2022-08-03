@@ -1,0 +1,25 @@
+@HD	VN:1.6
+@SQ	SN:chr1	LN:19280	M5:fff71a3a184071f39310cac35b1fb115	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chr2	LN:6215	M5:ea92888ea4750433a63fd5d3fce1b8db	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chr3	LN:21880	M5:046a1f46637ebc0b99e05e389547a32b	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chr4	LN:21929	M5:a5f2577f883e0d4006d31dc18ba7cbc0	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chr5	LN:16349	M5:771dc3d1af90400c4c58165ff9be79a7	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chr6	LN:6457	M5:661e69044aba7aa989dedf292494192a	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chr7	LN:19525	M5:0152bb5d1d1e01b287d8b9402d35ddc9	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chr8	LN:14426	M5:5b293b05ead97e5c56ac639ea523b714	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chr9	LN:171	M5:651471eade363e3ce6b1d67fc432608f	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chr10	LN:10959	M5:a834b54b099fdf70dd3659c7cbc40e21	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chr11	LN:11641	M5:93e9317504be84a8fd81fc3ffa04adc7	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chr12	LN:7210	M5:680e33faaee4c1d1832612e443353c38	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chr13	LN:6823	M5:758b0675e2a07a6815b2363e562915c1	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chr14	LN:15762	M5:54fdafe62897eb6a36fda8ef2d676531	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chr15	LN:13068	M5:dd81c3850f6ece51ab51f3b12be1a7d4	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chr16	LN:13618	M5:3cdc53287b4381627a35dc67a112e132	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chr17	LN:13368	M5:16213a14655517516e541536ba336750	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chr18	LN:2254	M5:5a224a7a5ae48b888d3198deef57f240	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chr19	LN:21396	M5:bb6881a289acd205c4224abc21e620ea	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chr20	LN:19807	M5:6dcd73bc8d72b8fb6ef7ddac400aecb4	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chr21	LN:7225	M5:d1207bf3fcace3ca7255eabf7490500e	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chr22	LN:6222	M5:ae7d667149c4b6f45df04d2fbf3d00d5	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chrX	LN:22507	M5:32ebde9ae7cdf94b2b41ca11088af3f7	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
+@SQ	SN:chrY	LN:7514	M5:e967f2bd6585047682b6b3fe42f6ba38	UR:file:/mnt/c/Users/adams/Ubuntu/pipeline-ase/work/03/1c4fd074438234a68a0fbe8d6a8964/sim_ref.fa.gz
