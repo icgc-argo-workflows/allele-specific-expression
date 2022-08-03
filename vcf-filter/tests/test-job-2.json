@@ -1,0 +1,8 @@
+{
+    "vcf_file": "input/sim_sample1.vcf",
+    "expected_output": "expected/expected.sim_sample1.filtered.vcf",
+    "publish_dir": "outdir",
+    "container_registry": "ghcr.io",
+    "cpus": 1,
+    "mem": 0.5
+}
