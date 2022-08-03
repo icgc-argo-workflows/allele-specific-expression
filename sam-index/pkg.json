@@ -1,0 +1,37 @@
+{
+    "name": "sam-index",
+    "version": "0.1.0",
+    "description": "SAM index",
+    "main": "main.nf",
+    "deprecated": false,
+    "keywords": [
+        "sam",
+        "index",
+        "bam"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/icgc-argo-workflows/allele-specific-expression.git"
+    },
+    "container": {
+        "registries": [
+            {
+                "registry": "ghcr.io",
+                "type": "docker",
+                "org": "icgc-argo-workflows",
+                "default": true
+            }
+        ]
+    },
+    "dependencies": [],
+    "devDependencies": [],
+    "contributors": [
+        {
+            "name": "Adam Streck",
+            "email": "adam.streck@mdc-berlin.de"
+        }
+    ],
+    "license": "MIT",
+    "bugReport": "https://github.com/icgc-argo-workflows/allele-specific-expression/issues",
+    "homepage": "https://github.com/icgc-argo-workflows/allele-specific-expression#readme"
+}

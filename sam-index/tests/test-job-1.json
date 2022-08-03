@@ -1,0 +1,7 @@
+{
+    "input_file": "input/sim_sample1.bam",
+    "expected_output": "expected/expected.sim_sample1.bam.bai",
+    "publish_dir": "outdir",
+    "cpus": 1,
+    "mem": 0.5
+}
