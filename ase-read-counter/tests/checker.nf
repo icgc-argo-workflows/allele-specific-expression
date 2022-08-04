@@ -73,18 +73,12 @@ process file_smart_diff {
 
   script:
     """
-    # Note: this is only for demo purpose, please write your own 'diff' according to your own needs.
-    # in this example, we need to remove date field before comparison eg, <div id="header_filename">Tue 19 Jan 2021<br/>test_rg_3.bam</div>
-    # sed -e 's#"header_filename">.*<br/>test_rg_3.bam#"header_filename"><br/>test_rg_3.bam</div>#'
 
-    cat ${output_file[0]} \
-      | sed -e 's#"header_filename">.*<br/>#"header_filename"><br/>#' > normalized_output
+    cat ${output_file[0]} > normalized_output
 
-    ([[ '${expected_file}' == *.gz ]] && gunzip -c ${expected_file} || cat ${expected_file}) \
-      | sed -e 's#"header_filename">.*<br/>#"header_filename"><br/>#' > normalized_expected
+    cat ${expected_file} > normalized_expected
 
-    diff normalized_output normalized_expected \
-      && ( echo "Test PASSED" && exit 0 ) || ( echo "Test FAILED, output file mismatch." && exit 1 )
+    diff normalized_output normalized_expected && ( echo "Test PASSED" && exit 0 ) || ( echo "Test FAILED, output file mismatch." && exit 1 )
     """
 }
 
@@ -93,7 +87,6 @@ workflow checker {
     bam
     bai
     vcf
-    idx
     fa
     fai
     gzi
@@ -105,7 +98,6 @@ workflow checker {
       bam,
       bai,
       vcf,
-      idx,
       fa,
       fai,
       gzi,
@@ -123,7 +115,6 @@ workflow {
     file(params.bam),
     file(params.bai),
     file(params.vcf),
-    file(params.idx),
     file(params.fa),
     file(params.fai),
     file(params.gzi),

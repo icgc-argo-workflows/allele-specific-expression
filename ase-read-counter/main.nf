@@ -52,7 +52,6 @@ params.publish_dir = ""  // set to empty string will disable publishDir
 params.bam = ""
 params.bai = ""
 params.vcf = ""
-params.idx = ""
 params.fa = ""
 params.fai = ""
 params.gzi = ""
@@ -72,7 +71,6 @@ process aseReadCounter {
     path(bam)
     path(bai)
     path(vcf)
-    path(idx)
     path(fa)
     path(fai)
     path(gzi)
@@ -84,7 +82,8 @@ process aseReadCounter {
   script:
     // add and initialize variables here as needed
 
-    """
+    """    
+    gatk IndexFeatureFile -I $vcf
     gatk ASEReadCounter -R $fa -I $bam -V $vcf -O ${bam.baseName}.read \
         --min-depth-of-non-filtered-base $params.min_depth \
         --min-mapping-quality $params.min_mapping_quality \
@@ -100,7 +99,6 @@ workflow {
     file(params.bam),
     file(params.bai),
     file(params.vcf),
-    file(params.idx),
     file(params.fa),
     file(params.fai),
     file(params.gzi),
