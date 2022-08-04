@@ -2,7 +2,6 @@
     "bam": "input/sim_sample1.bam",
     "bai": "input/sim_sample1.bam.bai",
     "vcf": "input/sim_sample1.filtered.vcf",
-    "idx": "input/sim_sample1.filtered.vcf.idx",
     "fa": "input/sim_ref.fa.gz",
     "fai": "input/sim_ref.fa.gz.fai",
     "gzi": "input/sim_ref.fa.gz.gzi",
