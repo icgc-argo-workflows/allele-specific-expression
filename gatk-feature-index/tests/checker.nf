@@ -66,12 +66,11 @@ process file_smart_diff {
 
   script:
     """
-    od ${output_file[0]} > normalized_output
+    wc -c ${output_file[0]} | cut -d " " -f1 > normalized_output
 
-    od ${expected_file} > normalized_expected
+    wc -c  ${expected_file} | cut -d " " -f1 > normalized_expected
 
-    diff normalized_output normalized_expected \
-      && ( echo "Test PASSED" && exit 0 ) || ( echo "Test FAILED, output file mismatch." && exit 1 ) 
+    diff normalized_output normalized_expected && ( echo "Test PASSED" && exit 0 ) || ( echo "Test FAILED, output file length mismatch." && exit 1 ) 
     """
 }
 
