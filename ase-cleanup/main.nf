@@ -67,7 +67,7 @@ process aseCleanup {
     path(mapp_path)
 
     output:
-    path("*.tsv"), emit: output_file
+    path("*.clean"), emit: output_file
     path("*.log"), emit: ase_log
 
     script:
