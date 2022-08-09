@@ -51,7 +51,7 @@ params.container = ""
 params.ase_file = ""
 params.mapp_file = ""
 params.min_mappability = 0.05
-params.min_SNP_depth = 8
+params.min_SNP_depth = 16
 
 include { aseCleanup } from '../main'
 

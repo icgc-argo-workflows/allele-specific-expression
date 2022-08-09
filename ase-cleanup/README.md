@@ -1,8 +1,16 @@
 # Package ase-cleanup
 
+This package runs an ase-cleanup script.
 
-Please update this with a brief introduction of the package.
+The script takes a GATK ASEReadCounter output and filters reads that do not match the following conditions:
+* mappability of a position is lower than `min_mappability` (default: `0.05`)
+* the number of reads for a position is lower than `min_SNP_depth` (default: `16`)
 
+Using the above, it produces a tab separated document detailing the results of the ASE analysis with the following result columns:
+    * `ase_ratio`: the RAF adjusted for mean bias towards reference
+    * `ref_bias`: the ration of reference counts vs total read counts for the particular base pair
+    * `AEI_pval`: the resulting p-value of binomial statistical test
+    * `AEI_padj`: the p-value corrected using Benjamini/Hochberg false discovery rate correction. The AE is present if `p < 0.5`. 
 
 ## Package development
 

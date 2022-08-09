@@ -52,7 +52,7 @@ params.publish_dir = ""  // set to empty string will disable publishDir
 params.ase_file = ""
 params.mapp_file = ""
 params.min_mappability = 0.05
-params.min_SNP_depth = 8
+params.min_SNP_depth = 16
 
 
 process aseCleanup {

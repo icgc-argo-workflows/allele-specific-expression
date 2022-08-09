@@ -1,7 +1,7 @@
 {
-    "ase_file": "input/sim_sample1.read",
-    "mapp_file": "input/sim_sample1.mapp",
-    "expected_output": "expected/expected.sim_sample1.tsv",
+    "ase_file": "input/sim_sample2.read",
+    "mapp_file": "input/sim_sample2.mapp",
+    "expected_output": "expected/expected.sim_sample2.clean",
     "publish_dir": "outdir",
     "cpus": 1,
     "mem": 0.5
