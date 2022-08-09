@@ -72,7 +72,7 @@ process aseCleanup {
 
     script:
       """
-      main.py --ase $ase --min_SNP_depth $params.min_SNP_depth  --output ${ase.baseName}.tsv --mappability $mapp_path --filter_mapp $params.min_mappability
+      main.py --ase $ase --min_SNP_depth $params.min_SNP_depth  --output ${ase.baseName}.clean --mappability $mapp_path --filter_mapp $params.min_mappability
       mv ase_cleanup.log ${ase.baseName}.ase.log
       """
 }
