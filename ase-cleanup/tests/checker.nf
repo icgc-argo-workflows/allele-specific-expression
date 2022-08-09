@@ -48,8 +48,9 @@ params.container_version = ""
 params.container = ""
 
 // tool specific parmas go here, add / change as needed
-params.ase_file = ""
-params.mapp_file = ""
+params.input_file = ""
+params.mapp_file = "/tools/k50.umap.bedgraph.gz"
+params.genome_file = "/tools/GRCh38_hla_decoy_ebv.fa.gz.genome"
 params.min_mappability = 0.05
 params.min_SNP_depth = 16
 
@@ -78,14 +79,12 @@ process file_smart_diff {
 
 workflow checker {
   take:
-    ase_file
-    mapp_file
+    input_file
     expected_output
 
   main:
     aseCleanup(
-      ase_file,
-      mapp_file
+      input_file        
     )
 
     file_smart_diff(
@@ -97,8 +96,7 @@ workflow checker {
 
 workflow {
   checker(
-    file(params.ase_file),
-    file(params.mapp_file),
+    file(params.input_file),
     file(params.expected_output)
   )
 }

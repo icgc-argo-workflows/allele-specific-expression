@@ -1,6 +1,5 @@
 {
-    "ase_file": "input/sim_sample2.read",
-    "mapp_file": "input/sim_sample2.mapp",
+    "input_file": "input/sim_sample2.read",
     "expected_output": "expected/expected.sim_sample2.clean",
     "publish_dir": "outdir",
     "cpus": 1,

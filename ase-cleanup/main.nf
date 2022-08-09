@@ -49,8 +49,9 @@ params.publish_dir = ""  // set to empty string will disable publishDir
 
 
 // tool specific parmas go here, add / change as needed
-params.ase_file = ""
-params.mapp_file = ""
+params.input_file = ""
+params.mapp_file = "/tools/k50.umap.bedgraph.gz"
+params.genome_file = "/tools/GRCh38_hla_decoy_ebv.fa.gz.genome"
 params.min_mappability = 0.05
 params.min_SNP_depth = 16
 
@@ -64,15 +65,18 @@ process aseCleanup {
 
     input:
     path(ase)
-    path(mapp_path)
 
     output:
     path("*.clean"), emit: output_file
-    path("*.log"), emit: ase_log
+    path("*.log"), emit: log_file
 
     script:
-      """
-      main.py --ase $ase --min_SNP_depth $params.min_SNP_depth  --output ${ase.baseName}.clean --mappability $mapp_path --filter_mapp $params.min_mappability
+      var name = ase.baseName
+      """ 
+      awk -v OFS=\"\\t\" \"{print \\\$1,\\\$2-1,\\\$2 }\" $ase | tail -n+2 | sort -k1,1 -s > ${name}.bed
+      echo -e \"contig\tpos\tmappability\" > ${name}.mapp
+      bedtools map -a ${name}.bed -b $params.mapp_file -o min -c 4 -g $params.genome_file | cut -f1,3,4 >> ${name}.mapp
+      main.py --ase $ase --min_SNP_depth $params.min_SNP_depth  --output ${ase.baseName}.clean --mappability ${name}.mapp --filter_mapp $params.min_mappability
       mv ase_cleanup.log ${ase.baseName}.ase.log
       """
 }
@@ -82,7 +86,6 @@ process aseCleanup {
 // using this command: nextflow run <git_acc>/<repo>/<pkg_name>/<main_script>.nf -r <pkg_name>.v<pkg_version> --params-file xxx
 workflow {
   aseCleanup(
-    file(params.ase_file)
-    file(params.mapp_file)
+    file(params.input_file)
   )
 }
