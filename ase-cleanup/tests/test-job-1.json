@@ -1,7 +1,9 @@
 {
-    "input_file": "input/test_rg_3.bam",
-    "expected_output": "expected/expected.test_rg_3.bam",
+    "ase_file": "input/sim_sample1.read",
+    "mapp_file": "input/sim_sample1.mapp",
+    "expected_output": "expected/sim_sample1.tsv",
     "publish_dir": "outdir",
+    "container_registry": "ghcr.io",
     "cpus": 1,
     "mem": 0.5
 }
