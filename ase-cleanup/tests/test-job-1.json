@@ -3,7 +3,6 @@
     "mapp_file": "input/sim_sample1.mapp",
     "expected_output": "expected/expected.sim_sample1.tsv",
     "publish_dir": "outdir",
-    "container_registry": "ghcr.io",
     "cpus": 1,
     "mem": 0.5
 }
