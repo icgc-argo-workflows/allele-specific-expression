@@ -51,7 +51,7 @@ params.publish_dir = ""  // set to empty string will disable publishDir
 // tool specific parmas go here, add / change as needed
 params.input_file = ""
 params.mapp_file = "/tools/k50.umap.bedgraph.gz"
-params.genome_file = "/tools/GRCh38_hla_decoy_ebv.fa.gz.genome"
+params.genome_file = "/tools/GRCh38_Verily_v1.genome.fa.gz.genome"
 params.min_mappability = 0.05
 params.min_SNP_depth = 16
 

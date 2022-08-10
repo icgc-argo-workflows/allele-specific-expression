@@ -11,13 +11,17 @@ RUN groupadd -g 1000 ubuntu && \
     useradd -l -u 1000 -g ubuntu ubuntu && \
     install -d -m 0755 -o ubuntu -g ubuntu /home/ubuntu
 
-COPY *.py /tools/
-RUN cd /tools
-RUN wget https://bismap.hoffmanlab.org/raw/hg38/k50.umap.bedgraph.gz
-RUN wget https://object.cancercollaboratory.org:9080/swift/v1/genomics-public-data/reference-genome/GRCh38_hla_decoy_ebv/GRCh38_hla_decoy_ebv.fa.gz.fai
-RUN awk -v OFS=\"\\t\" \"{print \\\$1,\\\$2}\" GRCh38_hla_decoy_ebv.fa.gz.fai | sort -s > GRCh38_hla_decoy_ebv.fa.gz.genome
-WORKDIR /tools    
+ARG fai_url=https://object.cancercollaboratory.org:9080/swift/v1/genomics-public-data/rna-seq-references/GRCh38_Verily_v1.genome/GRCh38_Verily_v1.genome.fa.gz.fai
+ARG begraph_url=https://bismap.hoffmanlab.org/raw/hg38/k50.umap.bedgraph.gz 
 
+COPY *.py /tools/
+WORKDIR /tools
+ADD $fai_url /tools/
+RUN awk -v OFS="\t" "{print \$1,\$2}" GRCh38_Verily_v1.genome.fa.gz.fai | sort -s > GRCh38_Verily_v1.genome.fa.gz.genome # pre-creates the genome file
+ADD $begraph_url /tools/ 
+
+# local test only
+# COPY k50.umap.bedgraph.gz /tools/k50.umap.bedgraph.gz
 
 USER ubuntu
 ENTRYPOINT ["/usr/bin/env"]
