@@ -21,12 +21,11 @@ versioning, updating, CI testing and releasing.
 
 ## Inputs
 
-Please list all input parameters
-
+A GATK4 ASEReadCounter output file is required as input. Recommended naming is `filename.read`.
 
 ## Outputs
 
-Please list all outputs
+A single output file of the form `filenmane.clean` is produced. This combines the read file with the above listed columns..
 
 
 ## Usage
