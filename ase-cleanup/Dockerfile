@@ -17,7 +17,7 @@ ARG begraph_url=https://bismap.hoffmanlab.org/raw/hg38/k50.umap.bedgraph.gz
 COPY *.py /tools/
 WORKDIR /tools
 ADD $fai_url /tools/
-RUN awk -v OFS="\t" "{print \$1,\$2}" GRCh38_Verily_v1.genome.fa.gz.fai | sort -s > GRCh38_Verily_v1.genome.fa.gz.genome # pre-creates the genome file
+RUN awk -v OFS="\t" "{print \$1,\$2}" GRCh38_Verily_v1.genome.fa.gz.fai | sort -s > GRCh38_Verily_v1.genome.fa.gz.genome
 ADD $begraph_url /tools/ 
 
 # local test only
