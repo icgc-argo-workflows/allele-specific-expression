@@ -1,5 +1,8 @@
 *.py[cod]
 
+# Reference data
+GRCh38_Verily_v1.genome.*
+
 # C extensions
 *.so
 
