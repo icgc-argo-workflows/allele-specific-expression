@@ -32,7 +32,7 @@ nextflow.enable.dsl = 2
 version = '0.1.0'  // package version
 
 container = [
-    'ghcr.io': 'ghcr.io/icgc-argo-workflows/allele-specific-expression.ase-cleanup'
+    'ghcr.io': 'ghcr.io/icgc-argo-workflows/allele-specific-expression.ase-read-counter'
 ]
 default_container_registry = 'ghcr.io'
 /********************************************************************/
@@ -49,43 +49,49 @@ params.publish_dir = ""  // set to empty string will disable publishDir
 
 
 // tool specific parmas go here, add / change as needed
-params.input_file = ""
-params.mapp_file = "/home/ubuntu/k50.umap.bedgraph.gz"
-params.genome_file = "/home/ubuntu/GRCh38_Verily_v1.genome.fa.gz.genome"
-params.min_mappability = 0.05
-params.min_SNP_depth = 16
+params.bam = ""
+params.vcf = ""
+params.min_depth = 8
+params.min_mapping_quality = 20
+params.min_base_quality = 10
+params.fa_path = "/home/ubuntu/GRCh38_Verily_v1.genome.fa.gz"
 
-
-process aseCleanup {
+process aseReadCounter {
   container "${params.container ?: container[params.container_registry ?: default_container_registry]}:${params.container_version ?: version}"
   publishDir "${params.publish_dir}/${task.process.replaceAll(':', '_')}", mode: "copy", enabled: params.publish_dir
 
   cpus params.cpus
   memory "${params.mem} GB"
 
-    input:
-    path(ase)
+  input:
+    path(bam)
+    path(vcf)
 
-    output:
-    path("*.clean"), emit: output_file
-    path("*.log"), emit: log_file
+  output:
+    path("${bam.baseName}.read"), emit: output_file
 
-    script:
-      var name = ase.baseName
-      """ 
-      awk -v OFS=\"\\t\" \"{print \\\$1,\\\$2-1,\\\$2 }\" $ase | tail -n+2 | sort -k1,1V -s > ${name}.bed
-      echo -e \"contig\tpos\tmappability\" > ${name}.mapp
-      bedtools map -a ${name}.bed -b $params.mapp_file -o min -c 4 -g $params.genome_file | cut -f1,3,4 >> ${name}.mapp
-      main.py --ase $ase --min_SNP_depth $params.min_SNP_depth  --output ${ase.baseName}.clean --mappability ${name}.mapp --filter_mapp $params.min_mappability
-      mv ase_cleanup.log ${ase.baseName}.ase.log
-      """
+  script:
+    cat_cmd = "$vcf".endsWith(".gz") ? "zcat" : "cat"
+    filtered_vcf = "${vcf.baseName}.filtered.vcf"
+
+    """        
+    samtools index $bam 
+    $cat_cmd $vcf | cut -f 1,2 | sort -k1,1V -k2,2n | uniq -u > chr_file      
+    bcftools view $vcf --min-alleles 2 --max-alleles 2 -T chr_file -O v -o $filtered_vcf    
+    gatk IndexFeatureFile -I $filtered_vcf
+    gatk ASEReadCounter -R $params.fa_path -I $bam -V $filtered_vcf -O ${bam.baseName}.read \
+        --min-depth-of-non-filtered-base $params.min_depth \
+        --min-mapping-quality $params.min_mapping_quality \
+        --min-base-quality $params.min_base_quality
+    """
 }
 
 
 // this provides an entry point for this main script, so it can be run directly without clone the repo
 // using this command: nextflow run <git_acc>/<repo>/<pkg_name>/<main_script>.nf -r <pkg_name>.v<pkg_version> --params-file xxx
 workflow {
-  aseCleanup(
-    file(params.input_file)
+  aseReadCounter(
+    file(params.bam),
+    file(params.vcf)
   )
 }

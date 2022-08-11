@@ -14,16 +14,19 @@ RUN groupadd -g 1000 ubuntu && \
 ARG fai_url=https://object.cancercollaboratory.org:9080/swift/v1/genomics-public-data/rna-seq-references/GRCh38_Verily_v1.genome/GRCh38_Verily_v1.genome.fa.gz.fai
 ARG begraph_url=https://bismap.hoffmanlab.org/raw/hg38/k50.umap.bedgraph.gz 
 
-COPY *.py /tools/
-WORKDIR /tools
+COPY main.py /tools/
 ADD $fai_url /home/ubuntu
-RUN awk -v OFS="\t" "{print \$1,\$2}" /home/ubuntu/GRCh38_Verily_v1.genome.fa.gz.fai | sort -s > /home/ubuntu/GRCh38_Verily_v1.genome.fa.gz.genome
-ADD $begraph_url /home/ubuntu
-RUN chmod 644 /home/ubuntu/k50.umap.bedgraph.gz 
+RUN awk -v OFS="\t" "{print \$1,\$2}" /home/ubuntu/GRCh38_Verily_v1.genome.fa.gz.fai | sort -V -s > /home/ubuntu/GRCh38_Verily_v1.genome.fa.gz.genome
 
-# local test only
-# COPY k50.umap.bedgraph.gz /home/ubuntu/k50.umap.bedgraph.gz
+# Add the bedgraph file from URL
+# ADD $begraph_url /home/ubuntu
 
+# Copy the bedgraph (local test only)
+COPY k50.umap.bedgraph.gz /home/ubuntu/
+
+RUN chmod 644 /home/ubuntu/*
+
+WORKDIR /tools
 USER ubuntu
 ENTRYPOINT ["/usr/bin/env"]
 
