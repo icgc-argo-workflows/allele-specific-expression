@@ -49,13 +49,12 @@ params.container = ""
 
 // tool specific parmas go here, add / change as needed
 params.bam = ""
-params.bai = ""
 params.vcf = ""
-params.idx = ""
-params.fa = ""
-params.fai = ""
-params.gzi = ""
-params.dict = ""
+params.min_depth = 8
+params.min_mapping_quality = 20
+params.min_base_quality = 10
+params.fa_path = "/home/ubuntu/GRCh38_Verily_v1.genome.fa.gz"
+
 params.expected_output  = ""
 
 include { aseReadCounter } from '../main'
@@ -85,23 +84,13 @@ process file_smart_diff {
 workflow checker {
   take:
     bam
-    bai
     vcf
-    fa
-    fai
-    gzi
-    dict
     expected_output
 
   main:
     aseReadCounter(
       bam,
-      bai,
       vcf,
-      fa,
-      fai,
-      gzi,
-      dict
     )
 
     file_smart_diff(
@@ -113,12 +102,7 @@ workflow checker {
 workflow {
   checker(
     file(params.bam),
-    file(params.bai),
     file(params.vcf),
-    file(params.fa),
-    file(params.fai),
-    file(params.gzi),
-    file(params.dict),
     file(params.expected_output)
   )
 }

@@ -1,0 +1,8 @@
+{
+    "bam": "input/sim_sample2.bam",
+    "vcf": "input/sim_sample2.vcf",
+    "expected_output": "expected/expected.sim_sample2.read",
+    "publish_dir": "outdir",
+    "cpus": 1,
+    "mem": 0.5
+}
