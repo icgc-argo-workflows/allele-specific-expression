@@ -19,10 +19,10 @@ ADD $fai_url /home/ubuntu
 RUN awk -v OFS="\t" "{print \$1,\$2}" /home/ubuntu/GRCh38_Verily_v1.genome.fa.gz.fai | sort -V -s > /home/ubuntu/GRCh38_Verily_v1.genome.fa.gz.genome
 
 # Add the bedgraph file from URL
-# ADD $begraph_url /home/ubuntu
+ADD $begraph_url /home/ubuntu
 
 # Copy the bedgraph (local test only)
-COPY k50.umap.bedgraph.gz /home/ubuntu/
+# COPY k50.umap.bedgraph.gz /home/ubuntu/
 
 RUN chmod 644 /home/ubuntu/*
 
