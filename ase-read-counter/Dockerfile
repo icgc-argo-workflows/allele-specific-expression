@@ -25,15 +25,15 @@ ARG fa_url=https://object.cancercollaboratory.org:9080/swift/v1/genomics-public-
 ARG gzi_url=https://object.cancercollaboratory.org:9080/swift/v1/genomics-public-data/rna-seq-references/GRCh38_Verily_v1.genome/GRCh38_Verily_v1.genome.fa.gz.gzi
 ARG fai_url=https://object.cancercollaboratory.org:9080/swift/v1/genomics-public-data/rna-seq-references/GRCh38_Verily_v1.genome/GRCh38_Verily_v1.genome.fa.gz.fai
 
-COPY *.py /tools/
 ADD $fa_url /home/ubuntu
 ADD $gzi_url /home/ubuntu
 ADD $fai_url /home/ubuntu
+RUN gatk CreateSequenceDictionary -R /home/ubuntu/GRCh38_Verily_v1.genome.fa.gz
+RUN chmod 644 /home/ubuntu/*
 # COPY GRCh38_Verily_v1.genome.fa.gz /home/ubuntu
 # COPY GRCh38_Verily_v1.genome.fa.gz.fai /home/ubuntu
 # COPY GRCh38_Verily_v1.genome.fa.gz.gzi /home/ubuntu
 
-RUN gatk CreateSequenceDictionary -R /home/ubuntu/GRCh38_Verily_v1.genome.fa.gz
 
 USER ubuntu
 ENTRYPOINT ["/usr/bin/env"]
