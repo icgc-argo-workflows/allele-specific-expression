@@ -8,6 +8,10 @@ RUN pip install pyvcf pandas scipy statsmodels matplotlib pyensembl
 
 ENV PATH="/tools:${PATH}"
 
+RUN groupadd -g 1000 ubuntu && \
+    useradd -l -u 1000 -g ubuntu ubuntu && \
+    install -d -m 0755 -o ubuntu -g ubuntu /home/ubuntu
+
 ARG genome_url=https://object.cancercollaboratory.org:9080/swift/v1/genomics-public-data/rna-seq-references/GRCh38_Verily_v1.annotation/gencode.v40.chr_patch_hapl_scaff.annotation.gtf
 
 COPY *.py /tools/
@@ -20,9 +24,6 @@ RUN /tools/createGtfDB.py GRCh38 /home/ubuntu/gencode.v40.chr_patch_hapl_scaff.a
 # COPY gencode.v40.chr_patch_hapl_scaff.annotation.gtf /home/ubuntu
 # COPY gencode.v40.chr_patch_hapl_scaff.annotation.db /home/ubuntu
 
-RUN groupadd -g 1000 ubuntu && \
-    useradd -l -u 1000 -g ubuntu ubuntu && \
-    install -d -m 0755 -o ubuntu -g ubuntu /home/ubuntu
 
 RUN chmod 644 /home/ubuntu/*
 
