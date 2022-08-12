@@ -50,7 +50,9 @@ params.publish_dir = ""  // set to empty string will disable publishDir
 
 // tool specific parmas go here, add / change as needed
 params.input_file = ""
-params.output_pattern = "*"  // output file name pattern
+params.vcf_file = ""
+params.gtf_file = "/home/ubuntu/gencode.v40.chr_patch_hapl_scaff.annotation.gtf"
+params.assembly = "GRCh38"
 
 
 process aseGeneAnnotation {
@@ -62,20 +64,24 @@ process aseGeneAnnotation {
 
   input:  // input, make update as needed
     path input_file
+    path vcf_file
+
 
   output:  // output, make update as needed
-    path "output_dir/${params.output_pattern}", emit: output_file
+    path("${input_file.baseName}.tsv"), emit: gene_table
+    path("${input_file.baseName}.gene.log"), emit: gene_log
+    path("${input_file.baseName}.hap.tsv"), emit: hap_table
+    path("${input_file.baseName}.hap.log"), emit: hap_log
 
   script:
     // add and initialize variables here as needed
 
     """
-    mkdir -p output_dir
 
-    main.py \
-      -i ${input_file} \
-      -o output_dir
-
+    gene_annotation.py -I $input_file -O ${input_file.baseName}.tsv --gtf $params.gtf_file --ref $params.assembly
+    mv gene_annotation.log ${input_file.baseName}.gene.log
+    hap_table.py -I ${input_file.baseName}.tsv -V $vcf_file -O ${input_file.baseName}.hap.tsv
+    mv hap_table.log ${input_file.baseName}.hap.log
     """
 }
 
@@ -84,6 +90,7 @@ process aseGeneAnnotation {
 // using this command: nextflow run <git_acc>/<repo>/<pkg_name>/<main_script>.nf -r <pkg_name>.v<pkg_version> --params-file xxx
 workflow {
   aseGeneAnnotation(
-    file(params.input_file)
+    file(params.input_file),
+    file(params.vcf_file)
   )
 }

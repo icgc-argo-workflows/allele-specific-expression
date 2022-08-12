@@ -1,6 +1,8 @@
 {
-    "input_file": "input/test_rg_3.bam",
-    "expected_output": "expected/expected.test_rg_3.bam",
+    "input_file": "input/sim_sample1.clean",
+    "vcf_file": "input/sim_sample1.filtered.vcf",
+    "expected_output": "expected/expected.sim_sample1.tsv",
+    "expected_table": "expected/expected.sim_sample1.hap.tsv",
     "publish_dir": "outdir",
     "cpus": 1,
     "mem": 0.5

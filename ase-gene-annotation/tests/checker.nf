@@ -49,7 +49,11 @@ params.container = ""
 
 // tool specific parmas go here, add / change as needed
 params.input_file = ""
+params.vcf_file = ""
+params.gtf_file = "/home/ubuntu/gencode.v40.chr_patch_hapl_scaff.annotation.gtf"
+params.assembly = "GRCh38"
 params.expected_output = ""
+params.expected_table = ""
 
 include { aseGeneAnnotation } from '../main'
 
@@ -58,43 +62,39 @@ process file_smart_diff {
   container "${params.container ?: container[params.container_registry ?: default_container_registry]}:${params.container_version ?: version}"
 
   input:
-    path output_file
-    path expected_file
+    path gene_table
+    path hap_table
+    path expected_output
+    path expected_table
 
   output:
     stdout()
 
   script:
     """
-    # Note: this is only for demo purpose, please write your own 'diff' according to your own needs.
-    # in this example, we need to remove date field before comparison eg, <div id="header_filename">Tue 19 Jan 2021<br/>test_rg_3.bam</div>
-    # sed -e 's#"header_filename">.*<br/>test_rg_3.bam#"header_filename"><br/>test_rg_3.bam</div>#'
-
-    cat ${output_file[0]} \
-      | sed -e 's#"header_filename">.*<br/>#"header_filename"><br/>#' > normalized_output
-
-    ([[ '${expected_file}' == *.gz ]] && gunzip -c ${expected_file} || cat ${expected_file}) \
-      | sed -e 's#"header_filename">.*<br/>#"header_filename"><br/>#' > normalized_expected
-
-    diff normalized_output normalized_expected \
-      && ( echo "Test PASSED" && exit 0 ) || ( echo "Test FAILED, output file mismatch." && exit 1 )
+    diff ${gene_table} ${expected_output}  && ( echo "Test PASSED" ) || ( echo "Test FAILED, output file mismatch." && exit 1 )
+    diff ${hap_table} ${expected_table}  && ( echo "Test PASSED" ) || ( echo "Test FAILED, output file mismatch." && exit 1 )
     """
 }
-
 
 workflow checker {
   take:
     input_file
+    vcf_file
     expected_output
+    expected_table
 
   main:
     aseGeneAnnotation(
-      input_file
+      input_file,
+      vcf_file
     )
 
     file_smart_diff(
-      aseGeneAnnotation.out.output_file,
-      expected_output
+      aseGeneAnnotation.out.gene_table,
+      aseGeneAnnotation.out.hap_table,
+      expected_output,
+      expected_table
     )
 }
 
@@ -102,6 +102,8 @@ workflow checker {
 workflow {
   checker(
     file(params.input_file),
-    file(params.expected_output)
+    file(params.vcf_file),
+    file(params.expected_output),    
+    file(params.expected_table)
   )
 }

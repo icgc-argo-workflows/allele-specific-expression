@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
 
 """
   Copyright (c) 2021, Max Delbrück Center for Molecular Medicine in the Helmholtz Association
@@ -26,35 +25,8 @@
     Adam Streck
 """
 
-import os
 import sys
-import argparse
-import subprocess
+import pyensembl
 
-
-def main():
-    """
-    Python implementation of tool: ase-gene-annotation
-
-    This is auto-generated Python code, please update as needed!
-    """
-
-    parser = argparse.ArgumentParser(description='Tool: ase-gene-annotation')
-    parser.add_argument('-i', '--input-file', dest='input_file', type=str,
-                        help='Input file', required=True)
-    parser.add_argument('-o', '--output-dir', dest='output_dir', type=str,
-                        help='Output directory', required=True)
-    args = parser.parse_args()
-
-    if not os.path.isfile(args.input_file):
-        sys.exit('Error: specified input file %s does not exist or is not accessible!' % args.input_file)
-
-    if not os.path.isdir(args.output_dir):
-        sys.exit('Error: specified output dir %s does not exist or is not accessible!' % args.output_dir)
-
-    subprocess.run(f"cp {args.input_file} {args.output_dir}/", shell=True, check=True)
-
-
-if __name__ == "__main__":
-    main()
-
+data = pyensembl.Genome(reference_name=f"{sys.argv[1]}", annotation_name='genome_annotation', gtf_path_or_url=f'{sys.argv[2]}')
+data.index()
