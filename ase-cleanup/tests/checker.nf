@@ -62,17 +62,17 @@ process file_smart_diff {
   input:
     path output_file
     path expected_file
+    path log_file
+    path vaf_file
 
   output:
     stdout()
 
   script:
     """
-    cat ${output_file[0]} > normalized_output
-
-    cat ${expected_file} > normalized_expected
-
-    diff normalized_output normalized_expected  && ( echo "Test PASSED" && exit 0 ) || ( echo "Test FAILED, output file mismatch." && exit 1 )
+    diff ${output_file[0]} ${expected_file} && ( echo "Output file matched" ) || ( echo "Test FAILED, output file mismatch." && exit 1 )
+    test -e ${log_file} || ( echo "Test FAILED, log missing" && exit 2 )
+    test -e ${vaf_file} || ( echo "Test FAILED, VAF png missing" && exit 3 )
     """
 }
 
@@ -89,7 +89,9 @@ workflow checker {
 
     file_smart_diff(
       aseCleanup.out.output_file,
-      expected_output
+      expected_output,
+      aseCleanup.out.log_file,
+      aseCleanup.out.vaf_file
     )
 }
 

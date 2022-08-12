@@ -69,6 +69,7 @@ process aseCleanup {
     output:
     path("*.clean"), emit: output_file
     path("*.log"), emit: log_file
+    path("*.vaf.png"), emit: vaf_file
 
     script:
       var name = ase.baseName
@@ -76,7 +77,7 @@ process aseCleanup {
       awk -v OFS=\"\\t\" \"{print \\\$1,\\\$2-1,\\\$2 }\" $ase | tail -n+2 | sort -k1,1V -s > ${name}.bed
       echo -e \"contig\tpos\tmappability\" > ${name}.mapp
       bedtools map -a ${name}.bed -b $params.mapp_file -o min -c 4 -g $params.genome_file | cut -f1,3,4 >> ${name}.mapp
-      main.py --ase $ase --min_SNP_depth $params.min_SNP_depth  --output ${ase.baseName}.clean --mappability ${name}.mapp --filter_mapp $params.min_mappability
+      main.py --ase $ase --min_SNP_depth $params.min_SNP_depth  --output ${ase.baseName}.clean --mappability ${name}.mapp --filter_mapp $params.min_mappability --plot ${ase.baseName}.vaf.png
       mv ase_cleanup.log ${ase.baseName}.ase.log
       """
 }

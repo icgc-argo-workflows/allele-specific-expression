@@ -29,6 +29,7 @@ import argparse
 import scipy as sp
 import statsmodels.api as sm
 import logging
+import matplotlib.pyplot as plt
 
 
 def main():
@@ -57,6 +58,8 @@ def main():
                         help="Numeric, p value threshold for testing heterozygosity, suggest=0.02, default=otherBases.sum()/rawDepth.sum()")
     parser.add_argument("--output", dest="output_file",
 						help="output table")
+    parser.add_argument("--plot", dest="plot_file",
+						help="VAF plot file")
     args = parser.parse_args()
 
     ase = read_ase(args.ase)
@@ -73,7 +76,17 @@ def main():
     logging.info(f"args.filter_mapp_score = {args.filter_mapp_score}")
     ase_clean = clean_up(ase_het, args.filter_mapp_score, args.filter_total_read, perror)
     ase_clean.to_csv(args.output_file, sep="\t", index=True, header=True)
+    vaf_plot(ase_clean, args.plot_file)
 
+
+def vaf_plot(ase, plot_file):
+    step_val = 1/8
+    plt.xticks(np.arange(0, 1+step_val, step=step_val))
+    plt.hist(ase["ase_ratio"], bins=32)
+    plt.xlabel("B-Allele Frequency")
+    plt.ylabel("Number of Positions")
+    plt.savefig(plot_file)
+    
 
 def read_ase(ase_file):
     ase = pd.read_csv(ase_file, sep="\t", index_col=(0, 1))

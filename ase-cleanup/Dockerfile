@@ -1,9 +1,9 @@
-FROM python 
+FROM python
 
 LABEL org.opencontainers.image.source https://github.com/icgc-argo-workflows/allele-specific-expression
 
 RUN apt-get update && apt-get install -y bedtools
-RUN pip install pandas scipy statsmodels
+RUN pip install pandas scipy statsmodels matplotlib
 
 ENV PATH="/tools:${PATH}"
 
