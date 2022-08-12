@@ -25,8 +25,9 @@ A GATK4 ASEReadCounter output file is required as input. Recommended naming is `
 
 ## Outputs
 
-A single output file of the form `filenmane.clean` is produced. This combines the read file with the above listed columns..
-
+* `filenmane.clean`: the main result file. This combines the read file with the above listed columns.
+* `filenmane.ase.log`: the log file with the procedure of running the ASE analysis.
+* `filenmane.vaf.png`: a variable allele frequency plot from the results of the ASE analysis.
 
 ## Usage
 
