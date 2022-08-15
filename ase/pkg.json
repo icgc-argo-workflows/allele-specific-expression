@@ -1,0 +1,31 @@
+{
+    "name": "ase",
+    "version": "0.1.0",
+    "description": "Allele Specific Expression",
+    "main": "main.nf",
+    "deprecated": false,
+    "keywords": [
+        "allele",
+        "rna",
+        "expression"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/icgc-argo-workflows/allele-specific-expression.git"
+    },
+    "dependencies": [
+        "github.com/icgc-argo-workflows/allele-specific-expression/ase-read-counter@0.1.0",
+        "github.com/icgc-argo-workflows/allele-specific-expression/ase-cleanup@0.1.0",
+        "github.com/icgc-argo-workflows/allele-specific-expression/ase-gene-annotation@0.1.0"        
+    ],
+    "devDependencies": [],
+    "contributors": [
+        {
+            "name": "Adam Streck",
+            "email": "adam.streck@mdc-berlin.de"
+        }
+    ],
+    "license": "MIT",
+    "bugReport": "https://github.com/icgc-argo-workflows/allele-specific-expression/issues",
+    "homepage": "https://github.com/icgc-argo-workflows/allele-specific-expression#readme"
+}

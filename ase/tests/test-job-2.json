@@ -1,0 +1,11 @@
+{
+    "bam": "input/sim_sample2.bam",
+    "vcf": "input/sim_sample2.vcf",
+    "expected_output": "expected/expected.sim_sample2.tsv",
+    "expected_table": "expected/expected.sim_sample2.hap.tsv",
+    "min_SNP_depth": 16,
+    "publish_dir": "outdir",
+    "container_registry": "ghcr.io",
+    "cpus": 1,
+    "mem": 0.5
+}
