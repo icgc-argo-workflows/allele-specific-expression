@@ -1,8 +1,9 @@
 # Package ase-gene-annotation
 
 
-Please update this with a brief introduction of the package.
-
+Annotates the ASE gene expression data with the gene labels. 
+1. The positions matching exons are annotated with the associated genes.
+2. For phased data, a table with haplotype specific expression is created. 
 
 ## Package development
 
@@ -13,13 +14,16 @@ versioning, updating, CI testing and releasing.
 
 ## Inputs
 
-Please list all input parameters
+* `sample_name.clean`: The result of the ase-cleanup.
+* `variants.vcf`: The VCF file with phased data. 
 
 
 ## Outputs
 
-Please list all outputs
-
+* `sample_name.tsv`: The annotated table.
+* `sample_name.gene.log`: Log of the annotation process.
+* `sample_name.hap.tsv`: The haplotype specific expression table.
+* `sample_name.hap.log`: Log of the haplotype specific expression process.
 
 ## Usage
 
