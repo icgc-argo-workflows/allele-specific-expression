@@ -40,8 +40,10 @@ params.container_registry = ""
 params.container_version = ""
 
 // tool specific parmas go here, add / change as needed
-params.input_file = ""
+params.bam = ""
+params.vcf = ""
 params.expected_output = ""
+params.expected_table = ""
 params.cleanup = false
 
 include { Ase } from '../main'
@@ -51,50 +53,49 @@ include { Ase } from '../main'
 
 process file_smart_diff {
   input:
-    path output_file
-    path expected_file
+    path gene_table
+    path hap_table
+    path expected_output
+    path expected_table
 
   output:
     stdout()
 
   script:
     """
-    # Note: this is only for demo purpose, please write your own 'diff' according to your own needs.
-    # in this example, we need to remove date field before comparison eg, <div id="header_filename">Tue 19 Jan 2021<br/>test_rg_3.bam</div>
-    # sed -e 's#"header_filename">.*<br/>test_rg_3.bam#"header_filename"><br/>test_rg_3.bam</div>#'
-
-    cat ${output_file[0]} \
-      | sed -e 's#"header_filename">.*<br/>#"header_filename"><br/>#' > normalized_output
-
-    ([[ '${expected_file}' == *.gz ]] && gunzip -c ${expected_file} || cat ${expected_file}) \
-      | sed -e 's#"header_filename">.*<br/>#"header_filename"><br/>#' > normalized_expected
-
-    diff normalized_output normalized_expected \
-      && ( echo "Test PASSED" && exit 0 ) || ( echo "Test FAILED, output file mismatch." && exit 1 )
+    diff ${gene_table} ${expected_output}  && ( echo "Test PASSED" ) || ( echo "Test FAILED, output file mismatch." && exit 1 )
+    diff ${hap_table} ${expected_table}  && ( echo "Test PASSED" ) || ( echo "Test FAILED, output file mismatch." && exit 1 )
     """
 }
 
 
 workflow checker {
   take:
-    input_file
+    bam
+    vcf
     expected_output
+    expected_table
 
   main:
     Ase(
-      input_file
+      bam,
+      vcf
     )
 
     file_smart_diff(
-      Ase.out.output_file,
-      expected_output
+      Ase.out.output_ase,
+      Ase.out.output_hse,
+      expected_output,
+      expected_table
     )
 }
 
 
 workflow {
   checker(
-    file(params.input_file),
-    file(params.expected_output)
+    file(params.bam),
+    file(params.vcf),
+    file(params.expected_output),    
+    file(params.expected_table)
   )
 }

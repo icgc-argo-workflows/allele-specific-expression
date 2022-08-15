@@ -25,50 +25,72 @@
     Adam Streck
 */
 
+/********************************************************************/
+/* this block is auto-generated based on info from pkg.json where   */
+/* changes can be made if needed, do NOT modify this block manually */
 nextflow.enable.dsl = 2
 version = '0.1.0'  // package version
 
-// universal params go here, change default value as needed
-params.container = ""
+container = [
+    'ghcr.io': 'ghcr.io/icgc-argo-workflows/allele-specific-expression.ase-read-counter'
+]
+default_container_registry = 'ghcr.io'
+/********************************************************************/
+
+
+// universal params go here
 params.container_registry = ""
 params.container_version = ""
+params.container = ""
+
 params.cpus = 1
 params.mem = 1  // GB
 params.publish_dir = ""  // set to empty string will disable publishDir
 
+
 // tool specific parmas go here, add / change as needed
 params.bam = ""
 params.vcf = ""
-params.cleanup = true
+params.min_depth = 8
+params.min_mapping_quality = 20
+params.min_base_quality = 10
+params.fa_path = "/home/ubuntu/GRCh38_Verily_v1.genome.fa.gz"
 
-include { aseReadCounter } from './wfpr_modules/github.com/icgc-argo-workflows/allele-specific-expression/ase-read-counter@0.1.0/main.nf'
-include { aseCleanup } from './wfpr_modules/github.com/icgc-argo-workflows/allele-specific-expression/ase-cleanup@0.1.0/main.nf'
-include { aseGeneAnnotation } from './wfpr_modules/github.com/icgc-argo-workflows/allele-specific-expression/ase-gene-annotation@0.1.0/main.nf'
+process aseReadCounter {
+  container "${params.container ?: container[params.container_registry ?: default_container_registry]}:${params.container_version ?: version}"
+  publishDir "${params.publish_dir}/${task.process.replaceAll(':', '_')}", mode: "copy", enabled: params.publish_dir
 
+  cpus params.cpus
+  memory "${params.mem} GB"
 
-// please update workflow code as needed
-workflow Ase {
-  take:  // update as needed
-    bam
-    vcf
+  input:
+    path(bam)
+    path(vcf)
 
+  output:
+    path("${bam.baseName}.read"), emit: output_file
 
-  main:  // update as needed
-    read_out = aseReadCounter(bam, vcf)
-    clean_out = aseCleanup(read_out.output_file)
-    annotate_out = aseGeneAnnotation(clean_out.output_file, vcf)
+  script:
+    cat_cmd = "$vcf".endsWith(".gz") ? "zcat" : "cat"
+    filtered_vcf = "${vcf.baseName}.filtered.vcf"
 
-  emit:  // update as needed
-    output_ase = annotate_out.gene_table
-    output_hse = annotate_out.hap_table
-    output_vaf = clean_out.vaf_file
+    """        
+    samtools index $bam 
+    $cat_cmd $vcf | cut -f 1,2 | sort -V -k1,1V -k2,2n | uniq -u > chr_file      
+    bcftools view $vcf --min-alleles 2 --max-alleles 2 -T chr_file -O v -o $filtered_vcf    
+    gatk IndexFeatureFile -I $filtered_vcf
+    gatk ASEReadCounter -R $params.fa_path -I $bam -V $filtered_vcf -O ${bam.baseName}.read \
+        --min-depth-of-non-filtered-base $params.min_depth \
+        --min-mapping-quality $params.min_mapping_quality \
+        --min-base-quality $params.min_base_quality
+    """
 }
 
 
 // this provides an entry point for this main script, so it can be run directly without clone the repo
 // using this command: nextflow run <git_acc>/<repo>/<pkg_name>/<main_script>.nf -r <pkg_name>.v<pkg_version> --params-file xxx
 workflow {
-  Ase(
+  aseReadCounter(
     file(params.bam),
     file(params.vcf)
   )
