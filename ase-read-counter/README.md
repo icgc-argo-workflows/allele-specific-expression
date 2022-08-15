@@ -1,7 +1,7 @@
 # Package ase-read-counter
 
 
-Please update this with a brief introduction of the package.
+Runs GATK4 ASEReadCounter tool on the provided BAM alignment and the provided germline VCF file. Uses the ICGC AGRO reference RNA genome sequence.
 
 
 ## Package development
@@ -13,12 +13,13 @@ versioning, updating, CI testing and releasing.
 
 ## Inputs
 
-Please list all input parameters
+* `sample_name.bam`: BAM alignment file
+* `mutations.vcf`: SNPs for the given genome.
 
 
 ## Outputs
 
-Please list all outputs
+* `sample_name.read`: The output of the GATK4 ASEReadCounter tool.
 
 
 ## Usage
