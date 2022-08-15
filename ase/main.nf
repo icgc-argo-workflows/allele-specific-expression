@@ -37,26 +37,30 @@ params.mem = 1  // GB
 params.publish_dir = ""  // set to empty string will disable publishDir
 
 // tool specific parmas go here, add / change as needed
-params.input_file = ""
+params.bam = ""
+params.vcf = ""
 params.cleanup = true
 
-include { demoCopyFile } from "./local_modules/demo-copy-file"
-
+include { aseReadCounter } from './wfpr_modules/github.com/icgc-argo-workflows/allele-specific-expression/ase-read-counter@0.1.0/ase-read-counter'
+include { aseCleanup } from './wfpr_modules/github.com/icgc-argo-workflows/allele-specific-expression/ase-cleanup@0.1.0/ase-cleanup'
+include { aseGeneAnnotation } from './wfpr_modules/github.com/icgc-argo-workflows/allele-specific-expression/ase-gene-annotation@0.1.0/ase-gene-annotation'
 
 
 // please update workflow code as needed
 workflow Ase {
   take:  // update as needed
-    input_file
+    bam
+    vcf
 
 
   main:  // update as needed
-    demoCopyFile(input_file)
-
+    read_out = aseReadCounter(bam, vcf)
+    clean_out = aseCleanup(read_out.output_file)
+    annotate_out = aseGeneAnnotation(clean_out.output_file)
 
   emit:  // update as needed
-    output_file = demoCopyFile.out.output_file
-
+    output_ase = annotate_out.out.gene_table
+    output_hse = annotate_out.out.hap_table
 }
 
 
@@ -64,6 +68,7 @@ workflow Ase {
 // using this command: nextflow run <git_acc>/<repo>/<pkg_name>/<main_script>.nf -r <pkg_name>.v<pkg_version> --params-file xxx
 workflow {
   Ase(
-    file(params.input_file)
+    file(params.bam),
+    file(params.vcf)
   )
 }

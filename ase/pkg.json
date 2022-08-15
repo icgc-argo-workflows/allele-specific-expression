@@ -13,7 +13,11 @@
         "type": "git",
         "url": "https://github.com/icgc-argo-workflows/allele-specific-expression.git"
     },
-    "dependencies": [],
+    "dependencies": [
+        "https://github.com/icgc-argo-workflows/ase-read-counter@0.1.0",
+        "https://github.com/icgc-argo-workflows/ase-cleanup@0.1.0",
+        "https://github.com/icgc-argo-workflows/ase-gene-annotation@0.1.0"        
+    ],
     "devDependencies": [],
     "contributors": [
         {
