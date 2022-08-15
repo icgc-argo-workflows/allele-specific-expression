@@ -36,9 +36,9 @@ versioning, updating, CI testing and releasing.
 
 ## Outputs
 
-* `sample_name.tsv`: The annotated table.
-* `sample_name.gene.log`: Log of the annotation process.
-* `sample_name.hap.tsv`: The haplotype specific expression table.
+* `sample_name.tsv`: The annotated table (converted from ase-cleanup process),
+* `sample_name.gene.log`: Log of the annotation process,
+* `sample_name.hap.tsv`: The haplotype specific expression table,
 * `sample_name.hap.log`: Log of the haplotype specific expression process.
 
 ## Usage
