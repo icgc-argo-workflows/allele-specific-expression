@@ -1,7 +1,12 @@
 # Package ase
 
 
-Please update this with a brief introduction of the package.
+This is a workflow combining the following tools in a sequence:
+* `ase-read-counter`
+* `ase-cleanup`
+* `ase-gene-annotation`
+
+For more details on the worflow, see the readme in the parent directory. For the deatils on the individual tools, see the respective readme files in the subdirectories.
 
 
 ## Package development
@@ -13,12 +18,15 @@ versioning, updating, CI testing and releasing.
 
 ## Inputs
 
-Please list all input parameters
+* `sample_name.bam`: BAM alignment file
+* `mutations.vcf`: SNPs for the given genome.
 
 
 ## Outputs
 
-Please list all outputs
+* `sample_data.vaf.png`: A variable allele frequency plot from the results of the ASE analysis,
+* `sample_name.tsv`: an allele-specific expression table annotated with gene data,
+* `sample_name.hap.tsv`: the haplotype specific expression table,
 
 
 ## Usage
