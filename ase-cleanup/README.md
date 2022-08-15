@@ -21,13 +21,13 @@ versioning, updating, CI testing and releasing.
 
 ## Inputs
 
-A GATK4 ASEReadCounter output file is required as input. Recommended naming is `filename.read`.
+A GATK4 ASEReadCounter output file is required as input. Recommended naming is `sample_data.read`.
 
 ## Outputs
 
-* `filenmane.clean`: the main result file. This combines the read file with the above listed columns.
-* `filenmane.ase.log`: the log file with the procedure of running the ASE analysis.
-* `filenmane.vaf.png`: a variable allele frequency plot from the results of the ASE analysis.
+* `sample_data.clean`: the main result file. This combines the read file with the above listed columns.
+* `sample_data.ase.log`: the log file with the procedure of running the ASE analysis.
+* `sample_data.vaf.png`: a variable allele frequency plot from the results of the ASE analysis.
 
 ## Usage
 
