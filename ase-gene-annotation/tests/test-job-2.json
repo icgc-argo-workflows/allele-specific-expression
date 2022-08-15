@@ -1,0 +1,9 @@
+{
+    "input_file": "input/sim_sample2.clean",
+    "vcf_file": "input/sim_sample2.filtered.vcf",
+    "expected_output": "expected/expected.sim_sample2.tsv",
+    "expected_table": "expected/expected.sim_sample2.hap.tsv",
+    "publish_dir": "outdir",
+    "cpus": 1,
+    "mem": 0.5
+}
