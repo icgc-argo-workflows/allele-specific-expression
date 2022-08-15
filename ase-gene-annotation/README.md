@@ -2,8 +2,24 @@
 
 
 Annotates the ASE gene expression data with the gene labels. 
-1. The positions matching exons are annotated with the associated genes.
+1. The positions matching introns/exons are annotated with the associated genes.
 2. For phased data, a table with haplotype specific expression is created. 
+
+The gene annotation adds following columns:
+* `gene_id`: the ENSAMBL gene id,
+* `feature`: one of (intron, exon).
+
+The haplotype specific expression table has the following columns:
+* `gene_id`: the ENSAMBL gene id,
+* `refCount`: the number of reads supporting the reference haplotype,
+* `altCount`: the number of reads supporting the alternative haplotype,
+* `totalCount`: the total number of reads supporting the haplotype,
+* `hap1`: the count of reads from the haplotype 1,
+* `hap2`: the count of reads from the haplotype 2,
+* `positions`: the number of positions in the gene,
+* `HSE_ratio`: the ratio of the haplotype specific expression,
+* `HEI_pval`: the p-value of the haplotype expression imballance score,
+* `HEI_padj`: the adjusted p-value of the HEI score.
 
 ## Package development
 
