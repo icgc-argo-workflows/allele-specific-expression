@@ -1,0 +1,27 @@
+name: ase
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - bzip2
+  - curl
+  - bcftools
+  - bedtools
+  - gatk4
+  - openjdk>=10.0
+  - python>=3.8
+  - gcc
+  - pip
+  - nextflow
+  - samtools
+  - pyvcf
+  - pip:
+    - biopython
+    - numpy
+    - pandas
+    - scipy
+    - statsmodels
+    - matplotlib
+    - pyensembl
+
