@@ -1,11 +1,5 @@
 nextflow.enable.dsl=2
 
-scripts_folder = "${projectDir}/scripts/"
-ase_cleanup_path = scripts_folder + "ase_cleanup.py"
-gene_annotation_path = scripts_folder + "gene_annotation.py"
-hap_table_path = scripts_folder + "hap_table.py"
-plot_VAF_path = scripts_folder + "plot_VAF.py"
-
 params.min_depth = 16
 params.min_mapping_quality = 20
 params.min_base_quality = 10
@@ -13,8 +7,6 @@ params.min_mappability = 0.05
 params.out_dir ="./out"
 params.debug_out = ""
 params.vcf_sample = null
-
-clean_suffix = params.containsKey("gtf") ? "clean" : "tsv"
 
 process bgzip 
 {
@@ -25,7 +17,8 @@ process bgzip
 
     output:
     path("*.gz")
-    
+
+    script:
     """
     bgzip $fa 
     """  
@@ -40,7 +33,8 @@ process samIndex
 
     output:
     tuple(val(name), path(bam), path("*.bai"))
-    
+
+    script:
     """
     samtools index $bam 
     """
@@ -55,7 +49,8 @@ process gatkDict
 
     output:
     path("*.dict")
-    
+
+    script:
     """
     gatk CreateSequenceDictionary -R $fa 
     """
@@ -72,6 +67,7 @@ process samFaidx
     path("*.fai"), emit: fai
     path("*.gzi"), emit: gzi
 
+    script:
     """
     samtools faidx $fa
     """
@@ -88,7 +84,7 @@ process filterVcf {
     tuple val(name), path("${vcf_file.baseName}.filtered.vcf")
     
     script:
-    cat_cmd = "$vcf_file".endsWith(".gz") ? "zcat" : "cat"
+    def cat_cmd = "$vcf_file".endsWith(".gz") ? "zcat" : "cat"
     """
     $cat_cmd $vcf_file |
     cut -f 1,2 | 
@@ -107,7 +103,8 @@ process gatkFeatureIndex
 
     output:
     tuple val(name), path(vcf_file), path("*.idx")
-    
+
+    script:
     """
     gatk IndexFeatureFile -I $vcf_file
     """
@@ -127,6 +124,7 @@ process aseReadCounterPair
     output:
     tuple(val(name), path("${name}.read"))
 
+    script:
     """
     gatk ASEReadCounter -R $fa -I $bam -V $vcf -O ${name}.read \
         --min-depth-of-non-filtered-base $params.min_depth \
@@ -145,6 +143,7 @@ process faGenome
     output:
     path("${fai.baseName}.genome")
 
+    script:
     """
     awk -v OFS=\"\\t\" \"{print \\\$1,\\\$2}\" $fai | sort -V -s > ${fai.baseName}.genome
     """
@@ -160,6 +159,7 @@ process bedFile
     output:    
     tuple(val(name), path("${name}.bed"))
 
+    script:
     """   
     awk -v OFS=\"\\t\" \"{print \\\$1,\\\$2-1,\\\$2 }\" $ase | tail -n+2 | sort -V -k1,1 -s > ${name}.bed
     """
@@ -176,7 +176,8 @@ process bedtoolsMap
     
     output:
     tuple(val(name), path("${name}.mapp"))
- 
+
+    script:
     """    
     echo -e \"contig\tpos\tmappability\" > ${name}.mapp
     bedtools map -a $bed -b $mapp_path -o min -c 4 -g $genome | cut -f1,3,4 >> ${name}.mapp
@@ -190,14 +191,15 @@ process aseCleanUpMapp
     input:
     tuple(val(name), path(ase), path(mapp))
     path(ase_cleanup_py)
+    val(output_suffix)
 
     output:
-    tuple val(name), path("*." + clean_suffix), emit: ase_file
+    tuple val(name), path("*.${output_suffix}"), emit: ase_file
     path("*.log"), emit: ase_log
 
     script:  
     """
-    python $ase_cleanup_py --ase $ase --min_SNP_depth $params.min_depth  --output ${ase.baseName}.${clean_suffix} --mappability $mapp --filter_mapp $params.min_mappability
+    python $ase_cleanup_py --ase $ase --min_SNP_depth $params.min_depth  --output ${ase.baseName}.${output_suffix} --mappability $mapp --filter_mapp $params.min_mappability
     mv ase_cleanup.log ${ase.baseName}.ase.log
     """
 }
@@ -209,14 +211,15 @@ process aseCleanUp
     input:
     tuple(val(name), path(ase))
     path(ase_cleanup_py)
+    val(output_suffix)
 
     output:
-    tuple val(name), path("*." + clean_suffix), emit: ase_file
+    tuple val(name), path("*.${output_suffix}"), emit: ase_file
     path("*.log"), emit: ase_log
 
     script:  
     """
-    python $ase_cleanup_py --ase $ase --min_SNP_depth $params.min_depth  --output ${ase.baseName}.${clean_suffix}
+    python $ase_cleanup_py --ase $ase --min_SNP_depth $params.min_depth  --output ${ase.baseName}.${output_suffix}
     mv ase_cleanup.log ${ase.baseName}.ase.log
     """
 }
@@ -235,7 +238,8 @@ process aseGeneAnnotation
     output: 
     tuple val(name), path("${name}.tsv"), emit: gene_file
     path("${name}.gene_annotation.log"), emit: gene_log
-    
+
+    script:
     """
     python $gene_annotation_py -I $ase_clean -O ${name}.hap --gtf $gtf --ref $assembly
     mv ${name}.hap ${name}.tsv
@@ -254,6 +258,7 @@ process aseVAFPlot
     output: 
     path("${name}.vaf.png")
 
+    script:
     """
     python $plot_vaf_py -I $ase_clean -O ${name}.vaf.png
     """
@@ -291,6 +296,7 @@ process createGtfDB
     output:
     path(filename)
 
+    script:
     """
     #!/usr/bin/env python
     
@@ -315,13 +321,23 @@ process createGtfDB
     """
 }
 
-def getVcfFiles(bam_names) 
+workflow
 {
-    if (params.containsKey("vcf")) 
+    if (!params.bam)
+        error "Missing required parameter: --bam"
+    if (!params.fa)
+        error "Missing required parameter: --fa"
+    if (params.containsKey("gtf") && !params.assembly)
+        error "--assembly is required when --gtf is provided"
+
+    clean_suffix = params.containsKey("gtf") ? "clean" : "tsv"
+    bam = channel.fromFilePairs(params.bam, size: 1, checkIfExists: true)
+    bam_names = bam.map{name, _file -> name}
+    if (params.containsKey("vcf"))
     {
-        vcf_files = Channel.fromPath(params.vcf, checkIfExists: true)
+        vcf_files = channel.fromPath(params.vcf, checkIfExists: true)
         vcf_files.ifEmpty{error "No VCF files found matching the naming of the bam files."}
-        vcf = bam_names.combine(vcf_files.collect()).map { combined ->
+        vcf_raw = bam_names.combine(vcf_files.collect()).map { combined ->
             def name = combined[0]
             def candidates = combined[1..-1]
 
@@ -340,30 +356,15 @@ def getVcfFiles(bam_names)
             tuple(name, matches[0])
         }
     }
-    else 
+    else
     {
         vcf_filename = params.bam.replaceFirst(/(?i)\.(bam|sam)$/, '.vcf')
-        vcf = Channel.fromFilePairs(vcf_filename, size: 1, checkIfExists: true)
+        vcf_raw = channel.fromFilePairs(vcf_filename, size: 1, checkIfExists: true)
     }
-    return vcf
-}
-
-workflow 
-{
-    if (!params.bam)
-        error "Missing required parameter: --bam"
-    if (!params.fa)
-        error "Missing required parameter: --fa"
-    if (params.containsKey("gtf") && !params.assembly)
-        error "--assembly is required when --gtf is provided"
-
-    bam = Channel.fromFilePairs(params.bam, size: 1, checkIfExists: true)
-    bam_names = bam.map{name, file -> name}
-    vcf_raw = getVcfFiles(bam_names)
     ref_fa = file(params.fa, checkIfExists: true)
     fa_is_zipped = params.fa.endsWith(".gz")
     fa = fa_is_zipped ? ref_fa : bgzip(ref_fa)
-    ase_clean_script = file(ase_cleanup_path)
+    ase_clean_script = file("${projectDir}/scripts/ase_cleanup.py", checkIfExists: true)
 
     // Create indices
     bam_bai = samIndex(bam)
@@ -386,14 +387,14 @@ workflow
         bed = bedFile(ase_count)
         bed_mapp = bedtoolsMap(genome, bedgraph_mapp, bed)
         mapped_files = ase_count.join(bed_mapp)
-        ase_clean = aseCleanUpMapp(mapped_files, ase_clean_script)
+        ase_clean = aseCleanUpMapp(mapped_files, ase_clean_script, clean_suffix)
     } 
     else 
     {
-        ase_clean = aseCleanUp(ase_count, ase_clean_script)
+        ase_clean = aseCleanUp(ase_count, ase_clean_script, clean_suffix)
     }
     
-    vaf_plot = aseVAFPlot(ase_clean.ase_file, file(plot_VAF_path, checkIfExists: true))
+    aseVAFPlot(ase_clean.ase_file, file("${projectDir}/scripts/plot_VAF.py", checkIfExists: true))
 
     if (params.containsKey("gtf")) 
     {        
@@ -405,8 +406,8 @@ workflow
         {
             gtf_db_path = params.gtf - ~"\\.gtf\$" + ".db"
         }
-        gene_table_script = file(gene_annotation_path)
-        hap_table_script = file(hap_table_path)
+        gene_table_script = file("${projectDir}/scripts/gene_annotation.py", checkIfExists: true)
+        hap_table_script = file("${projectDir}/scripts/hap_table.py", checkIfExists: true)
         gtf_file_ch = file(params.gtf, checkIfExists: true)
 
         if (file(gtf_db_path).exists()) 

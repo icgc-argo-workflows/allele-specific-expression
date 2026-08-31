@@ -5,6 +5,10 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Updated the workflow to pass Nextflow strict-syntax linting.
+
 ## [1.0.0] - 2026-08-31
 
 ### Added
