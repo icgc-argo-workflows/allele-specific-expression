@@ -1,0 +1,45 @@
+name: Container
+
+on:
+  push:
+    branches:
+      - "**"
+    paths:
+      - Dockerfile
+      - VERSION
+      - ase-environment.yaml
+      - .github/workflows/docker.yml
+  pull_request:
+    paths:
+      - Dockerfile
+      - VERSION
+      - ase-environment.yaml
+      - .github/workflows/docker.yml
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: container-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build container
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          lfs: false
+
+      - name: Build image
+        shell: bash
+        run: |
+          version="$(tr -d '\r\n' < VERSION)"
+          docker build \
+            --build-arg "PIPELINE_VERSION=${version}" \
+            --tag "pipeline-ase:${version}" \
+            .

@@ -1,5 +1,8 @@
 # Pipeline Allele Specific Expression
 
+[![CI](https://github.com/schwarzlab-ccb/pipeline-ase/actions/workflows/ci.yml/badge.svg)](https://github.com/schwarzlab-ccb/pipeline-ase/actions/workflows/ci.yml)
+[![Container](https://github.com/schwarzlab-ccb/pipeline-ase/actions/workflows/docker.yml/badge.svg)](https://github.com/schwarzlab-ccb/pipeline-ase/actions/workflows/docker.yml)
+
 This is a [Nextflow](https://nextflow.io/) pipeline for analysis of allele specific expression (ASE) based on RNA-seq data. 
 
 ## Pipeline
@@ -47,7 +50,7 @@ For a file `read_name.bam` we obtain the following outputs:
 ## Requirements
 
 * Java Runtime
-* Nextflow version 21.0 or newer
+* Nextflow version 21.04.0 or newer
 * Conda or Docker
 
 ### Nextflow installation
@@ -84,8 +87,8 @@ Random testing data are provided as a part of the package. The default test exec
 
 * Download the reference data using `sh ./DownloadRefData.sh`.
 * Execute the pipeline using either Conda or Docker as follows:
-    * [Conda] `nextflow -C test_data.config run pipeline-ase.nf -with-conda ase-environment.yaml`
-    * [Docker] `nextflow -C test_data.config run pipeline-ase.nf -with-docker pipeline-ase`
+    * [Conda] `nextflow -c test_data.config run pipeline-ase.nf -with-conda ase-environment.yaml`
+    * [Docker] `nextflow -c test_data.config run pipeline-ase.nf -with-docker pipeline-ase`
 
 **NOTE:** The parameters for the execution are stored in the Nextflow configuration file `test_data.config`.
 
@@ -138,3 +141,21 @@ Genomic basis for RNA alterations in cancer. Nature 578, 129–136 (2020).
 ### Further reading
 
 [Tools and best practices for data processing in allelic expression analysis, Castel et al.](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-015-0762-6)
+
+## Development and releases
+
+Install the pinned test dependencies and run the local checks with:
+
+```bash
+python -m pip install --requirement requirements-test.txt
+ruff check scripts tests
+python -m compileall -q scripts tests
+python -m unittest discover -s tests -v
+```
+
+The project follows [Semantic Versioning](https://semver.org/). The current
+version is stored in `VERSION` and repeated in the Nextflow manifest; automated
+tests ensure they stay synchronized. Container builds also receive the version
+as an OCI image label. Update both version values and `CHANGELOG.md` in a release
+commit, then push a matching tag such as `v1.0.0`. After all tests and a clean
+container build, GitHub Actions creates the corresponding release automatically.
