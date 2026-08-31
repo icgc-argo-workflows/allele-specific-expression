@@ -283,14 +283,29 @@ process createGtfDB
     val(filename)
 
     output:
-    path("*.db")
+    path(filename)
 
     """
     #!/usr/bin/env python
     
+    import os
+    import shutil
     import pyensembl
-    data = pyensembl.Genome(reference_name='$assembly', annotation_name='genome_annotation', gtf_path_or_url='$gtf_path')
+
+    output_path = '$filename'
+    data = pyensembl.Genome(
+        reference_name='$assembly',
+        annotation_name='genome_annotation',
+        gtf_path_or_url='$gtf_path',
+        cache_directory_path='.')
     data.index()
+
+    database_path = data.db.local_db_path
+    if os.path.abspath(database_path) != os.path.abspath(output_path):
+        shutil.copy2(database_path, output_path)
+
+    if not os.path.isfile(output_path):
+        raise RuntimeError(f'PyEnsembl database was not created: {output_path}')
     """
 }
 
@@ -372,10 +387,6 @@ workflow
         else 
         {
             gtf_db_ch = createGtfDB(gtf_file_ch, params.assembly, file(gtf_db_path).name)
-            gtf_db_ch.subscribe 
-            {
-                file(gtf_db_path).bytes = it.bytes  
-            }
         }
         ase_gene_annotation = aseGeneAnnotation(gene_table_script, ase_clean.ase_file, gtf_file_ch, gtf_db_ch, params.assembly)          
         gene_merge = ase_gene_annotation.gene_file.join(vcf_filtered)

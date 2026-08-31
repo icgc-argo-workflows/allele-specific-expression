@@ -40,7 +40,11 @@ def main():
     gpos = ase[indices].copy()
     gpos["contig"] = gpos["contig"].transform(lambda c: c[3:] if c[:3] == "chr" else c)
 
-    data = pyensembl.Genome(reference_name=args.ref, annotation_name='genome_annotation', gtf_path_or_url=args.gtf)
+    data = pyensembl.Genome(
+        reference_name=args.ref,
+        annotation_name='genome_annotation',
+        gtf_path_or_url=args.gtf,
+        cache_directory_path=os.getcwd())
    
     gene_table = create_gene_table(data, ase, gpos)
 
