@@ -41,11 +41,14 @@ def main():
         ase = add_mapp(ase, args.mapp)
     ref_source_cutoff = args.filter_total_read // 2
     ref_bias_table = calc_ref_bias(ase, ref_source_cutoff) if args.ref_ratio is None else insert_ref_bias(args.ref_ratio)
-    ase_rb = pd.merge(ase, ref_bias_table, how="left", left_on=["refAllele", "altAllele"], right_on=["refAllele", "altAllele"])
-    ase_rb["ref_bias"].fillna(float(0.5), inplace=True)
-    ase_rb.set_index(ase.index, inplace=True)
+    ase_rb = ase.join(
+        ref_bias_table.set_index(["refAllele", "altAllele"]),
+        on=["refAllele", "altAllele"])
+    ase_rb["ref_bias"] = ase_rb["ref_bias"].fillna(0.5)
     ase_ai = allelic_imbalance(ase_rb)
-    perror = args.het_perror if args.het_perror else ase.otherBases.sum() / ase.rawDepth.sum()
+    perror = args.het_perror if args.het_perror is not None else ase.otherBases.sum() / ase.rawDepth.sum()
+    if not 0 <= perror <= 1:
+        raise ValueError(f"Estimated genotype error probability is outside [0, 1]: {perror}")
     ase_het = het_test(ase_ai, perror)
     logging.info(f"args.filter_mapp_score = {args.filter_mapp_score}")
     ase_clean = clean_up(ase_het, args.filter_mapp_score, args.filter_total_read, perror)
@@ -59,7 +62,9 @@ def read_ase(ase_file):
         raise Exception("The ASE table is empty.")
 
     # the reference allele specific expression ratio
-    ase = ase[ase["totalCount"] > 0]
+    ase = ase[ase["totalCount"] > 0].copy()
+    if ase.empty:
+        raise ValueError("The ASE table has no positions with a positive totalCount.")
     ase['ase_ratio'] = ase['refCount']/ase['totalCount']
 
     return ase
@@ -102,7 +107,10 @@ def allelic_imbalance(ase):
     logging.info("Computing allelic expression imballance")
 
     # allelic epxression (effect size)
-    ase['AEI_pval'] = np.array([sp.stats.binom_test(ase.refCount[idx], n=ase.totalCount[idx], p=ase.ref_bias[idx]) for idx in ase.index], dtype="float")
+    ase['AEI_pval'] = np.array([
+        sp.stats.binomtest(k=int(ref_count), n=int(total_count), p=float(ref_bias)).pvalue
+        for ref_count, total_count, ref_bias in zip(ase.refCount, ase.totalCount, ase.ref_bias)
+    ], dtype="float")
     ase['AEI_padj'] = sm.stats.multipletests(ase['AEI_pval'], method="fdr_bh")[1]
 
     return ase
@@ -121,7 +129,14 @@ def allelic_imbalance(ase):
 # covered by eight or more reads, an average of 4.3 % of sites per sample are excluded by these criteria [1 % false
 # discovery rate (FDR)].
 def het_test(ase, perror):
-    het_pvals = [sp.stats.binom_test(np.minimum(ase.altCount[idx], ase.refCount[idx]), n=ase.totalCount[idx], p=perror, alternative="greater") for idx in ase.index]
+    het_pvals = [
+        sp.stats.binomtest(
+            k=int(min(alt_count, ref_count)),
+            n=int(total_count),
+            p=float(perror),
+            alternative="greater").pvalue
+        for alt_count, ref_count, total_count in zip(ase.altCount, ase.refCount, ase.totalCount)
+    ]
     het_padj = sm.stats.multipletests(np.array(het_pvals, dtype="float"), method="fdr_bh")[1]
 
     ase['het_padj'] = het_padj

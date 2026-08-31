@@ -31,17 +31,18 @@ For a file `read_name.bam` we obtain the following outputs:
     * `ase_ratio`: the RAF adjusted for mean bias towards reference
     * `ref_bias`: the ration of reference counts vs total read counts for the particular base pair
     * `AEI_pval`: the resulting p-value of binomial statistical test
-    * `AEI_padj`: the p-value corrected using Benjamini/Hochberg false discovery rate correction. The AE is present if `p < 0.5`. 
+    * `AEI_padj`: the p-value corrected using Benjamini/Hochberg false discovery rate correction. AE is considered significant if `p < 0.05`.
     * [`gene_id`]: if a genome file is provided, maps to an Ensembl gene id
-    * [`gene_feature`]: if a genome file is provided, maps to an Ensembl gene feature (exon/intron)
+    * [`feature`]: if a genome file is provided, maps to an Ensembl gene feature (exon/intron)
 * `read_name.ase.log`: a log file of the ASE calculation and filtering
-* `read_name.vaf.png`: a histogram of `ase_ratio` occurences. In a healthy sample the values should be around 0.5.
-* [`read_name.hap.tsv`]: if a genome file is provided and the data are phased, the results of ASE mapped to genes, the result colums are:
+* `read_name.vaf.png`: a histogram of `ase_ratio` occurrences. In a healthy sample the values should be around 0.5.
+* [`read_name.hap.tsv`]: if a genome file is provided and the data are phased, the results of ASE mapped to genes, with the following result columns:
     * `positions`: how many positions are covered by a gene
     * `HSE_ratio`: ratio of the first haplotype vs. total
     * `HEI_pval`: the resulting p-value of binomial statistical test for the gene
     * `HEI_padj`: the FDR B/H p-value correction
-* [`read_name.gebe.log`]: a log file of the haplotype specific expression calculation
+* [`read_name.gene_annotation.log`]: a log file of the GTF gene-matching calculation
+* [`read_name.hap.log`]: a log file of the haplotype-specific expression calculation
 
 ## Requirements
 
@@ -102,8 +103,11 @@ Random testing data are provided as a part of the package. The default test exec
 * `--min_base_quality int` minimum base call quality, if not satisfied, the base is not counted, `default=10`,
 
 #### Optional
-* `--vcf path` variant call files either as `.vcf` or `.vcf.gz`. This can be a glob pattern (e.g. `sample*.vcf`). If the path is not provided, the read files are matched as described above.
-* `--out path` a path to a folder where the output is stored
+* `--vcf path` variant call files either as `.vcf` or `.vcf.gz`. A single file is shared by all BAMs; multiple files from a glob (e.g. `sample*.vcf`) are matched to BAMs by basename. If the path is not provided, the read files are matched as described above.
+* `--out_dir path` a path to a folder where the output is stored
+* `--assembly name` genome assembly name used by PyEnsembl. Required when `--gtf` is provided (for example, `GRCh37` or `GRCh38`).
+* `--gtf path` GTF annotation used for gene matching. `chr1`/`1` style contig aliases are resolved automatically when possible.
+* `--vcf_sample name` sample column to use for haplotype calculations with a multi-sample VCF. If omitted, the BAM-derived name is used when it matches a VCF sample; single-sample VCFs are selected automatically.
 * `--mapp path` a mappability file in the [bedgraph format](https://genome.ucsc.edu/goldenPath/help/bedgraph.html), which is then used to filter out positions in regions of low quality. Contigs must match the reference
 * `--min_mappability float` a number between `[0-1]` describing the minimum mapping quality if the mappability file is present, bases that have lower than specified mappability are removed, `default=0.05`
 

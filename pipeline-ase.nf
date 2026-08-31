@@ -12,6 +12,7 @@ params.min_base_quality = 10
 params.min_mappability = 0.05
 params.out_dir ="./out"
 params.debug_out = ""
+params.vcf_sample = null
 
 clean_suffix = params.containsKey("gtf") ? "clean" : "tsv"
 
@@ -233,12 +234,12 @@ process aseGeneAnnotation
 
     output: 
     tuple val(name), path("${name}.tsv"), emit: gene_file
-    path("*.log"), emit: gene_log
+    path("${name}.gene_annotation.log"), emit: gene_log
     
     """
     python $gene_annotation_py -I $ase_clean -O ${name}.hap --gtf $gtf --ref $assembly
     mv ${name}.hap ${name}.tsv
-    mv gene_annotation.log ${name}.hap.log
+    mv gene_annotation.log ${name}.gene_annotation.log
     """
 }
 
@@ -248,12 +249,13 @@ process aseVAFPlot
 
     input: 
     tuple val(name), path(ase_clean)
+    path(plot_vaf_py)
 
     output: 
     path("${name}.vaf.png")
 
     """
-    $plot_VAF_path -I $ase_clean -O ${name}.vaf.png
+    python $plot_vaf_py -I $ase_clean -O ${name}.vaf.png
     """
 }
 
@@ -266,10 +268,14 @@ process computeHapTable
     tuple val(name), path(ase_gene_file), path(vcf_file)
     
     output:
-    path("${name}.hap.tsv")
+    tuple val(name), path("${name}.hap.tsv"), emit: hap_file
+    path("${name}.hap.log"), emit: hap_log
 
-    """    
-    python $hap_table_py -I $ase_gene_file -V $vcf_file -O ${name}.hap.tsv
+    script:
+    def sample_arg = params.vcf_sample ? "--sample '${params.vcf_sample}'" : ""
+    """
+    python $hap_table_py -I $ase_gene_file -V $vcf_file -O ${name}.hap.tsv --bam-name '${name}' $sample_arg
+    mv hap_table.log ${name}.hap.log
     """
 }
 
@@ -313,25 +319,48 @@ def getVcfFiles(bam_names)
 {
     if (params.containsKey("vcf")) 
     {
-        vcf_files = Channel.fromPath(params.vcf)
+        vcf_files = Channel.fromPath(params.vcf, checkIfExists: true)
         vcf_files.ifEmpty{error "No VCF files found matching the naming of the bam files."}
-        vcf = bam_names.combine(vcf_files)
-        vcf.ifEmpty{error "Failed to match VCF files onto BAM files."}
+        vcf = bam_names.combine(vcf_files.collect()).map { combined ->
+            def name = combined[0]
+            def candidates = combined[1..-1]
+
+            if (candidates.size() == 1)
+            {
+                return tuple(name, candidates[0])
+            }
+
+            def matches = candidates.findAll { candidate ->
+                candidate.name.replaceFirst(/(?i)\.vcf(\.gz)?$/, '') == name
+            }
+            if (matches.size() != 1)
+            {
+                error "Expected exactly one VCF matching BAM '${name}', found ${matches.size()}."
+            }
+            tuple(name, matches[0])
+        }
     }
     else 
     {
-        vcf_filename = params.bam - ".bam" + ".vcf"
-        vcf = Channel.fromFilePairs(vcf_filename, size: 1)
+        vcf_filename = params.bam.replaceFirst(/(?i)\.(bam|sam)$/, '.vcf')
+        vcf = Channel.fromFilePairs(vcf_filename, size: 1, checkIfExists: true)
     }
     return vcf
 }
 
 workflow 
 {
-    bam = Channel.fromFilePairs(params.bam, size: 1)
+    if (!params.bam)
+        error "Missing required parameter: --bam"
+    if (!params.fa)
+        error "Missing required parameter: --fa"
+    if (params.containsKey("gtf") && !params.assembly)
+        error "--assembly is required when --gtf is provided"
+
+    bam = Channel.fromFilePairs(params.bam, size: 1, checkIfExists: true)
     bam_names = bam.map{name, file -> name}
     vcf_raw = getVcfFiles(bam_names)
-    ref_fa = file(params.fa)
+    ref_fa = file(params.fa, checkIfExists: true)
     fa_is_zipped = params.fa.endsWith(".gz")
     fa = fa_is_zipped ? ref_fa : bgzip(ref_fa)
     ase_clean_script = file(ase_cleanup_path)
@@ -364,7 +393,7 @@ workflow
         ase_clean = aseCleanUp(ase_count, ase_clean_script)
     }
     
-    vaf_plot = aseVAFPlot(ase_clean.ase_file)
+    vaf_plot = aseVAFPlot(ase_clean.ase_file, file(plot_VAF_path, checkIfExists: true))
 
     if (params.containsKey("gtf")) 
     {        
@@ -378,7 +407,7 @@ workflow
         }
         gene_table_script = file(gene_annotation_path)
         hap_table_script = file(hap_table_path)
-        gtf_file_ch = file(params.gtf)
+        gtf_file_ch = file(params.gtf, checkIfExists: true)
 
         if (file(gtf_db_path).exists()) 
         {

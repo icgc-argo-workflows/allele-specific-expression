@@ -3,7 +3,6 @@ import os
 import argparse
 import logging
 import pandas as pd
-import numpy as np
 import pyensembl
 
 
@@ -37,16 +36,13 @@ def main():
 
     indices = ["contig", "position"]
 
-    gpos = ase[indices].copy()
-    gpos["contig"] = gpos["contig"].transform(lambda c: c[3:] if c[:3] == "chr" else c)
-
     data = pyensembl.Genome(
         reference_name=args.ref,
         annotation_name='genome_annotation',
         gtf_path_or_url=args.gtf,
         cache_directory_path=os.getcwd())
    
-    gene_table = create_gene_table(data, ase, gpos)
+    gene_table = create_gene_table(data, ase)
 
     result = pd.merge(ase, gene_table, how='left', left_on=indices, right_on=indices)
 
@@ -56,12 +52,11 @@ def main():
     logging.info("Done.")
 
 
-def create_gene_table(data, ase, gpos):
-    biotypes_include = {}
-    biotypes_exclude = {}
+def create_gene_table(data, ase):
     columns = ["contig", "position", "gene_id", "feature"]
     gene_table = pd.DataFrame(columns=columns)
-    n_sites = len(gpos)
+    n_sites = len(ase)
+    annotation_contigs = set(data.contigs())
 
     idx = 0
     stats_sites = 0
@@ -72,10 +67,11 @@ def create_gene_table(data, ase, gpos):
     logging.info('Processing sites.')
 
     for index, row in ase.iterrows():
-        contig = row["contig"]
+        contig = str(row["contig"])
+        query_contig = match_annotation_contig(contig, annotation_contigs)
         pos = row["position"]
-        genes = data.genes_at_locus(contig=contig, position=pos)
-        exons = data.exons_at_locus(contig=contig, position=pos)
+        genes = data.genes_at_locus(contig=query_contig, position=pos)
+        exons = data.exons_at_locus(contig=query_contig, position=pos)
         exons_gene_ids = set([exon.gene_id for exon in exons])
 
         start_idx = idx
@@ -113,6 +109,22 @@ def create_gene_table(data, ase, gpos):
     logging.info('%s sites lost.', stats_sites_lost)
 
     return(gene_table)
+
+
+def match_annotation_contig(contig, annotation_contigs):
+    candidates = [contig]
+    if contig.startswith("chr"):
+        candidates.append(contig[3:])
+    else:
+        candidates.append(f"chr{contig}")
+
+    if contig in {"M", "MT", "chrM", "chrMT"}:
+        candidates.extend(["M", "MT", "chrM", "chrMT"])
+
+    for candidate in candidates:
+        if candidate in annotation_contigs:
+            return candidate
+    return contig
 
 
 if __name__ == '__main__':
