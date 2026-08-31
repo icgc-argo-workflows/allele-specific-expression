@@ -1,6 +1,7 @@
 # Pipeline Allele Specific Expression
 
-[![CI](https://github.com/schwarzlab-ccb/pipeline-ase/actions/workflows/ci.yml/badge.svg)](https://github.com/schwarzlab-ccb/pipeline-ase/actions/workflows/ci.yml)
+[![Tests](https://github.com/schwarzlab-ccb/pipeline-ase/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/schwarzlab-ccb/pipeline-ase/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](./VERSION)
 [![Container](https://github.com/schwarzlab-ccb/pipeline-ase/actions/workflows/docker.yml/badge.svg)](https://github.com/schwarzlab-ccb/pipeline-ase/actions/workflows/docker.yml)
 
 This is a [Nextflow](https://nextflow.io/) pipeline for analysis of allele specific expression (ASE) based on RNA-seq data. 

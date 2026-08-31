@@ -44,6 +44,12 @@ class VersionTests(unittest.TestCase):
         changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
         self.assertIn(f"## [{self.version}]", changelog)
 
+    def test_readme_badge_matches_current_version(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        self.assertIn(
+            f"img.shields.io/badge/version-{self.version}-blue.svg", readme
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
