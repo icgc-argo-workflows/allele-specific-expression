@@ -63,3 +63,14 @@ jobs:
 
       - name: Validate configuration
         run: nextflow config . > /dev/null
+
+      - name: Set up pipeline environment
+        uses: mamba-org/setup-micromamba@v3
+        with:
+          environment-file: ase-environment.yaml
+          cache-environment: true
+          cache-downloads: true
+
+      - name: Run end-to-end smoke test
+        shell: bash -el {0}
+        run: bash tests/run_smoke_test.sh

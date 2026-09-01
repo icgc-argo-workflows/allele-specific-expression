@@ -4,13 +4,13 @@
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](./VERSION)
 [![Container](https://github.com/schwarzlab-ccb/pipeline-ase/actions/workflows/docker.yml/badge.svg)](https://github.com/schwarzlab-ccb/pipeline-ase/actions/workflows/docker.yml)
 
-This is a [Nextflow](https://nextflow.io/) pipeline for analysis of allele specific expression (ASE) based on RNA-seq data. 
+This is a [Nextflow](https://nextflow.io/) pipeline for analysis of allele-specific expression (ASE) based on RNA-seq data.
 
 ## Pipeline
 
-The pipeline processes a reads file (`BAM`/`SAM`) and its accompanying variant call files (`VCF`) together with their matching reference (`FA`) file and produces, for each SNP, the allele-specific expression ratio and the probability that true ASE is occuring.
+The pipeline processes an alignment file (`BAM`/`SAM`) and its accompanying variant call file (`VCF`) together with their matching reference (`FA`) file. For each SNP, it produces the allele-specific expression ratio and the probability that true ASE is occurring. SAM inputs are converted to coordinate-sorted BAM files before analysis.
 
-If a matching genotype (`GTF`) file is provided, the positions are also mapped to genes. 
+If a matching genome annotation (`GTF`) file is provided, the positions are also mapped to genes.
 
 If the data are additionally phased, the haplotype-specific expression for each gene is computed.
 
@@ -20,7 +20,7 @@ The whole pipeline operates as illustrated:
 
 The pipeline can be modified using the following quality control parameters:
 
-* QC1 paramters (applied before ASE read counter)
+* QC1 parameters (applied before ASE read counter)
     * base read depth 
     * read mapping quality 
     * base calling quality 
@@ -33,7 +33,7 @@ For a file `read_name.bam` we obtain the following outputs:
 
 * `read_name.tsv`: tab separated document detailing the results of the ASE analysis with the following result columns:
     * `ase_ratio`: the RAF adjusted for mean bias towards reference
-    * `ref_bias`: the ration of reference counts vs total read counts for the particular base pair
+    * `ref_bias`: the ratio of reference counts to total read counts for the particular base pair
     * `AEI_pval`: the resulting p-value of binomial statistical test
     * `AEI_padj`: the p-value corrected using Benjamini/Hochberg false discovery rate correction. AE is considered significant if `p < 0.05`.
     * [`gene_id`]: if a genome file is provided, maps to an Ensembl gene id
@@ -62,7 +62,7 @@ Nextflow can be installed into the repository directly using the command (from t
 
 ### Docker installation
 
-From the root of the repositiory
+From the root of the repository:
 
 ```
 cd pipeline-ase
@@ -71,11 +71,12 @@ docker build . -t pipeline-ase
 
 ### Conda installation
 
-Conda installs itself on the first run of the pipeline. 
+Install Conda or Mamba before using Nextflow's `-with-conda` option. Nextflow creates the pipeline environment from `ase-environment.yaml` on the first run.
 
 ## Execution
 
-To execture run 
+Run the pipeline with:
+
 `nextflow run pipeline-ase.nf [parameters]`
 
 ### Output
@@ -88,18 +89,30 @@ Random testing data are provided as a part of the package. The default test exec
 
 * Download the reference data using `sh ./DownloadRefData.sh`.
 * Execute the pipeline using either Conda or Docker as follows:
-    * [Conda] `nextflow -c test_data.config run pipeline-ase.nf -with-conda ase-environment.yaml`
-    * [Docker] `nextflow -c test_data.config run pipeline-ase.nf -with-docker pipeline-ase`
+    * [Conda] `nextflow -c tests/integration.config run pipeline-ase.nf -with-conda ase-environment.yaml`
+    * [Docker] `nextflow -c tests/integration.config run pipeline-ase.nf -with-docker pipeline-ase`
 
-**NOTE:** The parameters for the execution are stored in the Nextflow configuration file `test_data.config`.
+**NOTE:** The parameters for the execution are stored in `tests/integration.config`. Realistic Git LFS-backed inputs are under `tests/data/integration`; tiny self-contained CI inputs are under `tests/data/smoke`. Gene annotation and mappability are disabled by default; uncomment them to exercise those optional branches.
+
+### Input compatibility checks
+
+Before counting reads, the pipeline verifies that:
+
+* the alignment is readable and contains sequence dictionary entries;
+* alignment contig names and lengths are compatible with the reference FASTA;
+* every VCF record contig occurs in both the alignment and reference;
+* VCF header contig lengths, when present, agree with the alignment and reference; and
+* every VCF `REF` allele matches the supplied reference sequence.
+
+These checks intentionally stop the workflow early when files use different genome builds, such as an hg38 VCF with an hg19 BAM. Liftover the VCF with a variant-aware tool and validate it against the exact target FASTA before running the pipeline.
 
 ### Parameters
 
 #### Mandatory
-* `--fa path` reference file either as `.fa`  or `.fa.gz`.
-* `--bam path` alignment files either as `.bam` or `.sam`. This can be a glob pattern (e.g. `sample*.bam`). All files matching the pattern are used then.
+* `--fa path` reference file either as `.fa` or block-gzipped `.fa.gz`.
+* `--bam path` coordinate-sorted BAM files or SAM files. SAM inputs are converted and sorted automatically. This can be a glob pattern (for example, `sample*.bam`); every matching file is analyzed.
 
-**NOTE:** Read and variants are aligned by name. For example `sample5.bam` is matched to `sample5.vcf`. If you have single vcf for all samples, use the `vcf` parameter detailed below.
+**NOTE:** Alignments and variants are matched by name. For example, `sample5.bam` is matched to `sample5.vcf`. If you have a single VCF for all samples, use the `vcf` parameter detailed below.
 
 #### Default 
 * `--min_depth int` minimum read depth for a position, if not satisfied, the position is discarded, `default=16`,
@@ -112,7 +125,7 @@ Random testing data are provided as a part of the package. The default test exec
 * `--assembly name` genome assembly name used by PyEnsembl. Required when `--gtf` is provided (for example, `GRCh37` or `GRCh38`).
 * `--gtf path` GTF annotation used for gene matching. `chr1`/`1` style contig aliases are resolved automatically when possible.
 * `--vcf_sample name` sample column to use for haplotype calculations with a multi-sample VCF. If omitted, the BAM-derived name is used when it matches a VCF sample; single-sample VCFs are selected automatically.
-* `--mapp path` a mappability file in the [bedgraph format](https://genome.ucsc.edu/goldenPath/help/bedgraph.html), which is then used to filter out positions in regions of low quality. Contigs must match the reference
+* `--mapp path` a mappability file in the [bedGraph format](https://genome.ucsc.edu/goldenPath/help/bedgraph.html), which is used to filter positions in regions of low mappability. Contigs must match the reference.
 * `--min_mappability float` a number between `[0-1]` describing the minimum mapping quality if the mappability file is present, bases that have lower than specified mappability are removed, `default=0.05`
 
 ## Reference downloads
@@ -152,7 +165,10 @@ python -m pip install --requirement requirements-test.txt
 ruff check scripts tests
 python -m compileall -q scripts tests
 python -m unittest discover -s tests -v
+bash tests/run_smoke_test.sh
 ```
+
+The smoke test requires Nextflow and the tools in `ase-environment.yaml`. It runs the complete base workflow against tiny SAM, VCF, and FASTA fixtures in a temporary directory.
 
 The project follows [Semantic Versioning](https://semver.org/). The current
 version is stored in `VERSION` and repeated in the Nextflow manifest; automated

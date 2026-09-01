@@ -5,8 +5,8 @@
 
 # Nextflow
 .nextflow*
-nextflow
-work/
+/nextflow
+/work/
 
 # dev only
 test/
@@ -21,7 +21,7 @@ refs/
 # Data 
 ARGO_*/
 simulation_*
-data/
+/data/
 temp/
 out/
 
@@ -69,4 +69,3 @@ Thumbs.db
 *.flv
 *.mov
 *.wmv
-

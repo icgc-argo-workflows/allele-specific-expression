@@ -104,9 +104,9 @@ def insert_ref_bias(bias_param):
 
 
 def allelic_imbalance(ase):
-    logging.info("Computing allelic expression imballance")
+    logging.info("Computing allelic expression imbalance")
 
-    # allelic epxression (effect size)
+    # Allelic expression effect size.
     ase['AEI_pval'] = np.array([
         sp.stats.binomtest(k=int(ref_count), n=int(total_count), p=float(ref_bias)).pvalue
         for ref_count, total_count, ref_bias in zip(ase.refCount, ase.totalCount, ase.ref_bias)
@@ -159,11 +159,11 @@ def clean_up(ase, filter_mapp_score, filter_total, perror):
     if has_mappability:
         logging.info("%d / %d (%.2f%%) of sites removed due to mappability (mappability < %.2f)."
                     % (np.sum(~is_mapp), nsites_original, 100 * np.sum(~is_mapp) / nsites_original, filter_mapp_score))
-    logging.info("%d / %d (%.2f%%) of sites removed due to not have enough totalCount (< %d reads)"
+    logging.info("%d / %d (%.2f%%) of sites removed due to insufficient totalCount (< %d reads)."
                  % (np.sum(~is_enough_reads), nsites_original, 100*np.sum(~is_enough_reads) / nsites_original, filter_total))
-    logging.info("%d / %d (%.2f%%) of sites removed due to being staistically homozygous (het_test_fdr > %.2f, perror estimated at %.4f)."
+    logging.info("%d / %d (%.2f%%) of sites removed due to being statistically homozygous (het_test_fdr > %.2f, perror estimated at %.4f)."
                  % (np.sum(~is_statistically_biallelic), nsites_original, 100 * np.sum(~is_statistically_biallelic) / nsites_original, het_test_fdr, perror))
-    logging.info("%d / %d (%.2f%%) of do not have allelic  imbalance (ai_padj > %.2f)."
+    logging.info("%d / %d (%.2f%%) of sites do not have allelic imbalance (ai_padj > %.2f)."
                  % (np.sum(~is_allelic_imbalance), nsites_original, 100 * np.sum(~is_allelic_imbalance) / nsites_original, ai_padj))
 
     ase = ase[is_mapp & is_statistically_biallelic & is_enough_reads]

@@ -19,6 +19,10 @@ from scripts.hap_table import (
     select_sample,
     write_empty_table,
 )
+from scripts.validate_inputs import (
+    validate_alignment_contigs,
+    validate_vcf_contigs,
+)
 
 
 class AseCleanupTests(unittest.TestCase):
@@ -156,6 +160,28 @@ class HaplotypeTests(unittest.TestCase):
 
             self.assertTrue(path.is_file())
             self.assertIn("HSE_ratio", path.read_text().splitlines()[0])
+
+
+class InputValidationTests(unittest.TestCase):
+    def test_matching_contigs_are_accepted(self):
+        reference = {"chr1": 200, "chr2": 300}
+        alignment = {"chr1": 200, "chr2": 300}
+
+        validate_alignment_contigs(alignment, reference)
+        validate_vcf_contigs(
+            {"chr1": 200}, {"chr1"}, alignment, reference
+        )
+
+    def test_alignment_reference_length_mismatch_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "contig length mismatch"):
+            validate_alignment_contigs({"chr1": 199}, {"chr1": 200})
+
+    def test_vcf_record_contig_missing_from_alignment_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "absent from the alignment"):
+            validate_vcf_contigs(
+                {"chr2": 300}, {"chr2"}, {"chr1": 200},
+                {"chr1": 200, "chr2": 300}
+            )
 
 
 if __name__ == "__main__":

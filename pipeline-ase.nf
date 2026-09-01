@@ -40,6 +40,22 @@ process samIndex
     """
 }
 
+process samToBam
+{
+    publishDir "${params.debug_out}", mode: "copy", enabled: params.debug_out != ""
+
+    input:
+    tuple val(name), path(sam)
+
+    output:
+    tuple val(name), path("${name}.bam")
+
+    script:
+    """
+    samtools sort -o ${name}.bam $sam
+    """
+}
+
 process gatkDict 
 {
     publishDir "${params.debug_out}", mode: "copy", enabled: params.debug_out != ""
@@ -73,7 +89,38 @@ process samFaidx
     """
 }
 
-// For each pair (chr, pos) keeps only the first occurence if there are multiple. Only keep the bi-allelic positions
+process validateInputs
+{
+    publishDir "${params.debug_out}", mode: "copy", enabled: params.debug_out != ""
+
+    input:
+    tuple val(name), path(bam), path(bai), path(vcf)
+    path(fa)
+    path(fai)
+    path(gzi)
+    path(validate_inputs_py)
+
+    output:
+    tuple val(name), path(vcf)
+
+    script:
+    """
+    samtools quickcheck -v $bam
+    samtools view -H $bam > ${name}.header.sam
+    python $validate_inputs_py \
+        --alignment-header ${name}.header.sam \
+        --variants $vcf \
+        --reference-index $fai
+    bcftools norm \
+        --check-ref e \
+        --fasta-ref $fa \
+        --output-type u \
+        --output /dev/null \
+        $vcf
+    """
+}
+
+// Remove duplicated coordinates and retain only biallelic variant records.
 process filterVcf {
     publishDir "${params.debug_out}", mode: "copy", enabled: params.debug_out != ""
 
@@ -331,8 +378,9 @@ workflow
         error "--assembly is required when --gtf is provided"
 
     clean_suffix = params.containsKey("gtf") ? "clean" : "tsv"
-    bam = channel.fromFilePairs(params.bam, size: 1, checkIfExists: true)
-    bam_names = bam.map{name, _file -> name}
+    alignment = channel.fromFilePairs(params.bam, size: 1, checkIfExists: true)
+        .map { name, files -> tuple(name, files[0]) }
+    bam_names = alignment.map{name, _file -> name}
     if (params.containsKey("vcf"))
     {
         vcf_files = channel.fromPath(params.vcf, checkIfExists: true)
@@ -360,17 +408,35 @@ workflow
     {
         vcf_filename = params.bam.replaceFirst(/(?i)\.(bam|sam)$/, '.vcf')
         vcf_raw = channel.fromFilePairs(vcf_filename, size: 1, checkIfExists: true)
+            .map { name, files -> tuple(name, files[0]) }
     }
     ref_fa = file(params.fa, checkIfExists: true)
     fa_is_zipped = params.fa.endsWith(".gz")
     fa = fa_is_zipped ? ref_fa : bgzip(ref_fa)
     ase_clean_script = file("${projectDir}/scripts/ase_cleanup.py", checkIfExists: true)
+    validate_inputs_script = file("${projectDir}/scripts/validate_inputs.py", checkIfExists: true)
+
+    bam_input = alignment.filter { _name, alignment_file ->
+        alignment_file.name.toLowerCase().endsWith(".bam")
+    }
+    sam_input = alignment.filter { _name, alignment_file ->
+        alignment_file.name.toLowerCase().endsWith(".sam")
+    }
+    converted_sam = samToBam(sam_input)
+    bam = bam_input.mix(converted_sam)
 
     // Create indices
     bam_bai = samIndex(bam)
     faidx = samFaidx(fa)
     dict = gatkDict(fa)
-    vcf_filtered = filterVcf(vcf_raw)
+    validation_input = bam_bai.join(vcf_raw)
+    vcf_validated = validateInputs(
+        validation_input,
+        fa,
+        faidx.fai,
+        faidx.gzi,
+        validate_inputs_script)
+    vcf_filtered = filterVcf(vcf_validated)
     idx = gatkFeatureIndex(vcf_filtered)
     
     // merge data
@@ -379,7 +445,7 @@ workflow
     // Call read counter
     ase_count = aseReadCounterPair(joint_files, fa, faidx.fai, faidx.gzi, dict)
     
-    // Call cleaner (with optinal mapp input)
+    // Call cleaner (with optional mappability input)
     if (params.containsKey("mapp")) // Apply mappability
     {
         bedgraph_mapp = file(params.mapp)
