@@ -44,20 +44,17 @@ class VersionTests(unittest.TestCase):
         changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
         self.assertIn(f"## [{self.version}]", changelog)
 
-    def test_readme_has_dynamic_release_badge(self):
+    def test_readme_badge_matches_current_version(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         self.assertIn(
-            "img.shields.io/github/v/release/schwarzlab-ccb/pipeline-ase",
-            readme,
-        )
-        self.assertIn(
-            "github.com/schwarzlab-ccb/pipeline-ase/releases/latest", readme
+            f"img.shields.io/badge/version-{self.version}-blue.svg", readme
         )
 
     def test_readme_has_license_badge(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         self.assertIn(
-            "img.shields.io/github/license/schwarzlab-ccb/pipeline-ase",
+            "img.shields.io/github/license/"
+            "icgc-argo-workflows/allele-specific-expression",
             readme,
         )
 
