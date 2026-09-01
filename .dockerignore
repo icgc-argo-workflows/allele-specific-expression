@@ -1,0 +1,4 @@
+*
+!Dockerfile
+!ase-environment.yaml
+!conda-lock.yml

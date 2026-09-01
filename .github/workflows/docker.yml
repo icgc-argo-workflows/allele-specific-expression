@@ -6,14 +6,18 @@ on:
       - "**"
     paths:
       - Dockerfile
+      - .dockerignore
       - VERSION
       - ase-environment.yaml
+      - conda-lock.yml
       - .github/workflows/docker.yml
   pull_request:
     paths:
       - Dockerfile
+      - .dockerignore
       - VERSION
       - ase-environment.yaml
+      - conda-lock.yml
       - .github/workflows/docker.yml
   workflow_dispatch:
   workflow_call:

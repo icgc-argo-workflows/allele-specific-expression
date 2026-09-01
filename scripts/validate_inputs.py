@@ -3,6 +3,8 @@
 import argparse
 import gzip
 import re
+import sys
+from pathlib import Path
 
 
 CONTIG_PATTERN = re.compile(r"^##contig=<(?P<fields>.*)>$")
@@ -20,6 +22,11 @@ def main():
     )
     parser.add_argument("--variants", required=True, help="Input VCF or VCF.GZ file.")
     parser.add_argument("--reference-index", required=True, help="Target reference FASTA index.")
+    parser.add_argument("--bam-name", help="BAM-derived sample name.")
+    parser.add_argument("--sample", help="Explicitly selected VCF sample.")
+    parser.add_argument(
+        "--sample-output", help="File in which to record the selected VCF sample."
+    )
     args = parser.parse_args()
 
     reference_contigs = read_fai(args.reference_index)
@@ -30,6 +37,16 @@ def main():
     validate_vcf_contigs(
         declared_contigs, record_contigs, alignment_contigs, reference_contigs
     )
+    selected_sample = validate_sample_identity(
+        read_alignment_samples(args.alignment_header),
+        read_vcf_samples(args.variants),
+        args.bam_name,
+        args.sample,
+    )
+    if args.sample_output:
+        Path(args.sample_output).write_text(
+            f"{selected_sample or ''}\n", encoding="utf-8"
+        )
 
 
 def read_fai(path):
@@ -64,6 +81,23 @@ def read_alignment_header(path):
     return contigs
 
 
+def read_alignment_samples(path):
+    samples = set()
+    with open(path, encoding="utf-8") as handle:
+        for line in handle:
+            if not line.startswith("@RG\t"):
+                continue
+            for field in line.rstrip("\n").split("\t")[1:]:
+                if field.startswith("SM:") and field[3:]:
+                    samples.add(field[3:])
+    if len(samples) > 1:
+        raise ValueError(
+            "The alignment contains multiple @RG SM sample IDs: "
+            + ", ".join(sorted(samples))
+        )
+    return samples
+
+
 def read_vcf_contigs(path):
     declared = {}
     records = set()
@@ -86,6 +120,15 @@ def read_vcf_contigs(path):
     if not records:
         raise ValueError("The VCF contains no variant records.")
     return declared, records
+
+
+def read_vcf_samples(path):
+    open_vcf = gzip.open if str(path).lower().endswith(".gz") else open
+    with open_vcf(path, "rt", encoding="utf-8") as handle:
+        for line in handle:
+            if line.startswith("#CHROM"):
+                return line.rstrip("\n").split("\t")[9:]
+    return []
 
 
 def parse_contig_attributes(text):
@@ -152,6 +195,56 @@ def validate_vcf_contigs(
             )
     if mismatched:
         raise ValueError("VCF contig length mismatch: " + ", ".join(sorted(mismatched)))
+
+
+def validate_sample_identity(
+    alignment_samples, vcf_samples, bam_name=None, requested_sample=None
+):
+    if not vcf_samples:
+        print(
+            "Warning: the VCF has no sample columns; sample identity cannot be checked.",
+            file=sys.stderr,
+        )
+        return None
+
+    if requested_sample:
+        if requested_sample not in vcf_samples:
+            raise ValueError(
+                f"Requested VCF sample '{requested_sample}' is not present. "
+                f"Available samples: {', '.join(vcf_samples)}"
+            )
+        selected_sample = requested_sample
+    else:
+        matching_samples = sorted(alignment_samples.intersection(vcf_samples))
+        if len(matching_samples) == 1:
+            selected_sample = matching_samples[0]
+        elif len(matching_samples) > 1:
+            raise ValueError(
+                "Multiple VCF samples match alignment @RG SM values: "
+                + ", ".join(matching_samples)
+            )
+        elif bam_name and bam_name in vcf_samples:
+            selected_sample = bam_name
+        elif len(vcf_samples) == 1:
+            selected_sample = vcf_samples[0]
+        else:
+            raise ValueError(
+                "VCF contains multiple samples and none matches the alignment @RG SM "
+                "or BAM name. Specify --vcf_sample. Available samples: "
+                + ", ".join(vcf_samples)
+            )
+
+    if alignment_samples and selected_sample not in alignment_samples:
+        raise ValueError(
+            f"Selected VCF sample '{selected_sample}' does not match alignment @RG SM "
+            f"sample '{next(iter(alignment_samples))}'."
+        )
+    if not alignment_samples:
+        print(
+            "Warning: the alignment has no @RG SM value; sample identity cannot be checked.",
+            file=sys.stderr,
+        )
+    return selected_sample
 
 
 if __name__ == "__main__":

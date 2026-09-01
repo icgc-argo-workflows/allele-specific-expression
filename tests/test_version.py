@@ -50,6 +50,23 @@ class VersionTests(unittest.TestCase):
             f"img.shields.io/badge/version-{self.version}-blue.svg", readme
         )
 
+    def test_citation_matches_current_version(self):
+        citation = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
+        self.assertRegex(
+            citation,
+            rf"(?m)^version:\s*['\"]?{re.escape(self.version)}['\"]?\s*$",
+        )
+
+    def test_license_is_populated(self):
+        license_text = (ROOT / "LICENSE").read_text(encoding="utf-8")
+        self.assertIn("MIT License", license_text)
+        self.assertIn("Permission is hereby granted", license_text)
+
+    def test_conda_lock_tracks_environment_file(self):
+        lock_text = (ROOT / "conda-lock.yml").read_text(encoding="utf-8")
+        self.assertIn("linux-64:", lock_text)
+        self.assertIn("- ase-environment.yaml", lock_text)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -41,12 +41,15 @@ For a file `read_name.bam` we obtain the following outputs:
 * `read_name.ase.log`: a log file of the ASE calculation and filtering
 * `read_name.vaf.png`: a histogram of `ase_ratio` occurrences. In a healthy sample the values should be around 0.5.
 * [`read_name.hap.tsv`]: if a genome file is provided and the data are phased, the results of ASE mapped to genes, with the following result columns:
+    * `phase_set`: the VCF `PS` value used to orient the haplotypes; genes spanning multiple phase sets produce one row per phase set, and `.` indicates that the VCF supplied no `PS`
     * `positions`: how many positions are covered by a gene
     * `HSE_ratio`: ratio of the first haplotype vs. total
     * `HEI_pval`: the resulting p-value of binomial statistical test for the gene
     * `HEI_padj`: the FDR B/H p-value correction
 * [`read_name.gene_annotation.log`]: a log file of the GTF gene-matching calculation
 * [`read_name.hap.log`]: a log file of the haplotype-specific expression calculation
+* `software_versions.yml`: pipeline, Nextflow, and analysis-tool versions used for the run
+* `execution_trace.txt`, `execution_report.html`, and `execution_timeline.html`: Nextflow execution provenance and performance summaries
 
 ## Requirements
 
@@ -69,9 +72,13 @@ cd pipeline-ase
 docker build . -t pipeline-ase
 ```
 
+Tagged releases are also published as `ghcr.io/schwarzlab-ccb/pipeline-ase:<version>` and `ghcr.io/schwarzlab-ccb/pipeline-ase:latest`.
+
 ### Conda installation
 
 Install Conda or Mamba before using Nextflow's `-with-conda` option. Nextflow creates the pipeline environment from `ase-environment.yaml` on the first run.
+
+`conda-lock.yml` records the exact Linux packages and checksums used by the container build. It can also be installed directly with `conda-lock install --name ase conda-lock.yml`.
 
 ## Execution
 
@@ -92,7 +99,7 @@ Random testing data are provided as a part of the package. The default test exec
     * [Conda] `nextflow -c tests/integration.config run pipeline-ase.nf -with-conda ase-environment.yaml`
     * [Docker] `nextflow -c tests/integration.config run pipeline-ase.nf -with-docker pipeline-ase`
 
-**NOTE:** The parameters for the execution are stored in `tests/integration.config`. Realistic Git LFS-backed inputs are under `tests/data/integration`; tiny self-contained CI inputs are under `tests/data/smoke`. Gene annotation and mappability are disabled by default; uncomment them to exercise those optional branches.
+**NOTE:** The parameters for the execution are stored in `tests/integration.config`. Realistic Git LFS-backed inputs are under `tests/data/integration`; tiny self-contained CI inputs are under `tests/data/smoke`. The smoke test exercises gene annotation, mappability filtering, phased haplotype aggregation, and provenance output without duplicating the integration fixtures.
 
 ### Input compatibility checks
 
@@ -102,7 +109,8 @@ Before counting reads, the pipeline verifies that:
 * alignment contig names and lengths are compatible with the reference FASTA;
 * every VCF record contig occurs in both the alignment and reference;
 * VCF header contig lengths, when present, agree with the alignment and reference; and
-* every VCF `REF` allele matches the supplied reference sequence.
+* every VCF `REF` allele matches the supplied reference sequence; and
+* the selected VCF sample agrees with the alignment's `@RG` `SM` value when one is available.
 
 These checks intentionally stop the workflow early when files use different genome builds, such as an hg38 VCF with an hg19 BAM. Liftover the VCF with a variant-aware tool and validate it against the exact target FASTA before running the pipeline.
 
@@ -128,9 +136,13 @@ These checks intentionally stop the workflow early when files use different geno
 * `--mapp path` a mappability file in the [bedGraph format](https://genome.ucsc.edu/goldenPath/help/bedgraph.html), which is used to filter positions in regions of low mappability. Contigs must match the reference.
 * `--min_mappability float` a number between `[0-1]` describing the minimum mapping quality if the mappability file is present, bases that have lower than specified mappability are removed, `default=0.05`
 
+Only unique-coordinate, biallelic SNVs are passed to allele counting. Indels, multiallelic records, and duplicate-coordinate records are removed explicitly.
+
 ## Reference downloads
 
-The following human genome files have been tested with the pipeline:
+Run `bash DownloadRefData.sh` to download the tested reference, annotation, and mappability files into `refs/`. Downloads resume after interruption, retry transient failures, and are checked against a locally recorded SHA-256 digest on subsequent runs. For validation against a trusted published digest, set any of `GRCH38_SHA256`, `GRCH38_BGZIP_SHA256`, `GENCODE_V41_SHA256`, or `UMAP_K50_SHA256` before running the script.
+
+The following human genome files are downloaded:
 
 #### reference
 `wget https://storage.googleapis.com/genomics-public-data/references/GRCh38_Verily/GRCh38_Verily_v1.genome.fa`
@@ -142,15 +154,17 @@ The following human genome files have been tested with the pipeline:
 `wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_41/gencode.v41.annotation.gtf.gz`
 
 ## Contact
-Email questions, feature requests and bug reports to **Adam Streck, adam.streck@mdc-berlin.de**.
+Email questions, feature requests and bug reports to **Adam Streck, adam.streck@iccb-cologne.org**.
 
 ## License
-Pipeline-ASE is available under the MIT License. 
+Pipeline-ASE is available under the [MIT License](./LICENSE).
 
 ## Please cite
 PCAWG Transcriptome Core Group., Calabrese, C., Davidson, N.R. et al. 
 Genomic basis for RNA alterations in cancer. Nature 578, 129–136 (2020). 
 [https://doi.org/10.1038/s41586-020-1970-0](https://www.nature.com/articles/s41586-020-1970-0)
+
+Machine-readable citation metadata are provided in [`CITATION.cff`](./CITATION.cff).
 
 ### Further reading
 
@@ -168,11 +182,18 @@ python -m unittest discover -s tests -v
 bash tests/run_smoke_test.sh
 ```
 
-The smoke test requires Nextflow and the tools in `ase-environment.yaml`. It runs the complete base workflow against tiny SAM, VCF, and FASTA fixtures in a temporary directory.
+The smoke test requires Nextflow and the tools in `ase-environment.yaml`. It runs the complete workflow, including optional GTF and mappability branches, against tiny fixtures in a temporary directory.
+
+After changing `ase-environment.yaml`, regenerate and verify the Linux lockfile with:
+
+```bash
+conda-lock lock -f ase-environment.yaml -p linux-64 --lockfile conda-lock.yml
+conda-lock lock --check-input-hash -f ase-environment.yaml -p linux-64 --lockfile conda-lock.yml
+```
 
 The project follows [Semantic Versioning](https://semver.org/). The current
 version is stored in `VERSION` and repeated in the Nextflow manifest; automated
 tests ensure they stay synchronized. Container builds also receive the version
 as an OCI image label. Update both version values and `CHANGELOG.md` in a release
 commit, then push a matching tag such as `v1.0.0`. After all tests and a clean
-container build, GitHub Actions creates the corresponding release automatically.
+container build, GitHub Actions publishes the versioned container to GHCR and creates the corresponding release automatically.

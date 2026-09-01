@@ -8,6 +8,37 @@ params.out_dir ="./out"
 params.debug_out = ""
 params.vcf_sample = null
 
+process collectVersions
+{
+    publishDir params.out_dir, mode: "copy"
+
+    input:
+    val(pipeline_version)
+    val(nextflow_version)
+
+    output:
+    path("software_versions.yml")
+
+    script:
+    """
+    python_version=\$(python --version 2>&1)
+    samtools_version=\$(samtools --version | head -n 1)
+    bcftools_version=\$(bcftools --version | head -n 1)
+    bedtools_version=\$(bedtools --version)
+    gatk_version=\$(gatk --version 2>&1 | tail -n 1)
+
+    printf '%s\n' \
+        "pipeline_ase: '${pipeline_version}'" \
+        "nextflow: '${nextflow_version}'" \
+        "python: '\${python_version}'" \
+        "samtools: '\${samtools_version}'" \
+        "bcftools: '\${bcftools_version}'" \
+        "bedtools: '\${bedtools_version}'" \
+        "gatk: '\${gatk_version}'" \
+        > software_versions.yml
+    """
+}
+
 process bgzip 
 {
     publishDir "${params.debug_out}", mode: "copy", enabled: params.debug_out != ""
@@ -101,16 +132,21 @@ process validateInputs
     path(validate_inputs_py)
 
     output:
-    tuple val(name), path(vcf)
+    tuple val(name), path(vcf), emit: vcf
+    tuple val(name), path("${name}.vcf_sample.txt"), emit: sample
 
     script:
+    def sample_arg = params.vcf_sample ? "--sample '${params.vcf_sample}'" : ""
     """
     samtools quickcheck -v $bam
     samtools view -H $bam > ${name}.header.sam
     python $validate_inputs_py \
         --alignment-header ${name}.header.sam \
         --variants $vcf \
-        --reference-index $fai
+        --reference-index $fai \
+        --bam-name '${name}' \
+        --sample-output ${name}.vcf_sample.txt \
+        $sample_arg
     bcftools norm \
         --check-ref e \
         --fasta-ref $fa \
@@ -120,7 +156,7 @@ process validateInputs
     """
 }
 
-// Remove duplicated coordinates and retain only biallelic variant records.
+// Remove duplicated coordinates and retain only biallelic SNV records.
 process filterVcf {
     publishDir "${params.debug_out}", mode: "copy", enabled: params.debug_out != ""
 
@@ -137,7 +173,7 @@ process filterVcf {
     cut -f 1,2 | 
     sort -k1,1V -k2,2n |
     uniq -u > chr_file      
-    bcftools view $vcf_file --min-alleles 2 --max-alleles 2 -T chr_file -O v -o ${vcf_file.baseName}.filtered.vcf
+    bcftools view $vcf_file --types snps --min-alleles 2 --max-alleles 2 -T chr_file -O v -o ${vcf_file.baseName}.filtered.vcf
     """
 }   
 
@@ -317,16 +353,15 @@ process computeHapTable
 
     input:
     path(hap_table_py)
-    tuple val(name), path(ase_gene_file), path(vcf_file)
+    tuple val(name), path(ase_gene_file), path(vcf_file), path(sample_file)
     
     output:
     tuple val(name), path("${name}.hap.tsv"), emit: hap_file
     path("${name}.hap.log"), emit: hap_log
 
     script:
-    def sample_arg = params.vcf_sample ? "--sample '${params.vcf_sample}'" : ""
     """
-    python $hap_table_py -I $ase_gene_file -V $vcf_file -O ${name}.hap.tsv --bam-name '${name}' $sample_arg
+    python $hap_table_py -I $ase_gene_file -V $vcf_file -O ${name}.hap.tsv --bam-name '${name}' --sample-file $sample_file
     mv hap_table.log ${name}.hap.log
     """
 }
@@ -376,6 +411,8 @@ workflow
         error "Missing required parameter: --fa"
     if (params.containsKey("gtf") && !params.assembly)
         error "--assembly is required when --gtf is provided"
+
+    collectVersions(workflow.manifest.version ?: "dev", workflow.nextflow.version)
 
     clean_suffix = params.containsKey("gtf") ? "clean" : "tsv"
     alignment = channel.fromFilePairs(params.bam, size: 1, checkIfExists: true)
@@ -430,13 +467,13 @@ workflow
     faidx = samFaidx(fa)
     dict = gatkDict(fa)
     validation_input = bam_bai.join(vcf_raw)
-    vcf_validated = validateInputs(
+    validation_result = validateInputs(
         validation_input,
         fa,
         faidx.fai,
         faidx.gzi,
         validate_inputs_script)
-    vcf_filtered = filterVcf(vcf_validated)
+    vcf_filtered = filterVcf(validation_result.vcf)
     idx = gatkFeatureIndex(vcf_filtered)
     
     // merge data
@@ -485,7 +522,7 @@ workflow
             gtf_db_ch = createGtfDB(gtf_file_ch, params.assembly, file(gtf_db_path).name)
         }
         ase_gene_annotation = aseGeneAnnotation(gene_table_script, ase_clean.ase_file, gtf_file_ch, gtf_db_ch, params.assembly)          
-        gene_merge = ase_gene_annotation.gene_file.join(vcf_filtered)
+        gene_merge = ase_gene_annotation.gene_file.join(vcf_filtered).join(validation_result.sample)
         computeHapTable(hap_table_script, gene_merge)
     } 
 }

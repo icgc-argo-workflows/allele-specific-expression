@@ -1,0 +1,3 @@
+chr1	smoke	gene	1	200	.	+	.	gene_id "SMOKE_GENE"; gene_name "SmokeGene"; gene_biotype "protein_coding";
+chr1	smoke	transcript	1	200	.	+	.	gene_id "SMOKE_GENE"; transcript_id "SMOKE_TX"; gene_name "SmokeGene"; transcript_name "SmokeTranscript"; gene_biotype "protein_coding"; transcript_biotype "protein_coding";
+chr1	smoke	exon	1	200	.	+	.	gene_id "SMOKE_GENE"; transcript_id "SMOKE_TX"; exon_id "SMOKE_EXON"; exon_number "1";

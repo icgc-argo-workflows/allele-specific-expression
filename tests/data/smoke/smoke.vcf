@@ -2,5 +2,7 @@
 ##contig=<ID=chr1,length=200>
 ##FILTER=<ID=PASS,Description="All filters passed">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=PS,Number=1,Type=Integer,Description="Phase set">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	smoke
-chr1	100	.	A	G	60	PASS	.	GT	0|1
+chr1	100	.	A	G	60	PASS	.	GT:PS	0|1:100
+chr1	120	.	A	AT	60	PASS	.	GT:PS	0|1:100

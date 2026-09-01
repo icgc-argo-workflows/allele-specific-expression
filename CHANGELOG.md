@@ -10,11 +10,15 @@ uses [Semantic Versioning](https://semver.org/).
 - Input preflight validation for alignment, VCF, and reference contig compatibility and VCF reference alleles.
 - A lightweight end-to-end Nextflow smoke test in CI.
 - Automatic conversion and coordinate sorting of SAM inputs.
+- Phase-set-aware haplotype aggregation, VCF/BAM sample identity checks, and explicit biallelic SNV filtering.
+- Run provenance outputs, reproducible Linux dependency locking, citation metadata, and a populated MIT license.
+- Release container publication to GitHub Container Registry.
 
 ### Fixed
 
 - Updated the workflow to pass Nextflow strict-syntax linting.
 - Consolidated smoke and integration data under `tests/data`, corrected the optional integration settings, and fixed documentation and log-message typos.
+- Hardened reference downloads with retries, resume support, and SHA-256 integrity checks.
 
 ## [1.0.0] - 2026-08-31
 

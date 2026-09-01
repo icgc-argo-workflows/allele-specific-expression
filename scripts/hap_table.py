@@ -2,6 +2,7 @@
 
 import argparse
 import gzip
+from pathlib import Path
 import pandas as pd
 import numpy as np
 import scipy as sp
@@ -10,7 +11,7 @@ import statsmodels.api as sm
 
 
 OUTPUT_COLUMNS = [
-    "gene_id", "hap1", "hap2", "totalCount", "positions",
+    "gene_id", "phase_set", "hap1", "hap2", "totalCount", "positions",
     "HSE_ratio", "HEI_pval", "HEI_padj"]
 
 def main():
@@ -29,8 +30,15 @@ def main():
     parser.add_argument("-V", "--variants_file", required=True, help="Variants Calling File with genotype annotation (GT).")
     parser.add_argument("-O", "--output_file", required=True, help="Gene table output file.")
     parser.add_argument("--sample", help="VCF sample to use. Required for multi-sample VCFs unless --bam-name matches a sample.")
+    parser.add_argument("--sample-file", help="File containing the preflight-selected VCF sample.")
     parser.add_argument("--bam-name", help="BAM-derived sample name used to auto-select a matching VCF sample.")
     args = parser.parse_args()
+
+    requested_sample = args.sample
+    if args.sample_file:
+        selected_sample = Path(args.sample_file).read_text(encoding="utf-8").strip()
+        if selected_sample:
+            requested_sample = selected_sample
 
     ase = pd.read_csv(args.input_file, sep="\t")
 
@@ -40,7 +48,7 @@ def main():
         write_empty_table(args.output_file)
         return
 
-    gts = get_genotypes(args.variants_file, args.sample, args.bam_name)
+    gts = get_genotypes(args.variants_file, requested_sample, args.bam_name)
     genotyped = pd.merge(ase_filered, gts, how='inner', left_on=["position", "contig"], right_on=["position", "contig"])
     gen_filtered = filter_genotypes(genotyped)
     if len(gen_filtered) <= 0:
@@ -49,13 +57,10 @@ def main():
         return
 
     simplified = gen_filtered[[
-        "gene_id", "position", "refCount", "altCount", "totalCount", "GT"]].copy()
+        "gene_id", "position", "refCount", "altCount", "totalCount", "GT", "PS"
+    ]].copy()
     counted = count_hap(simplified)
-    gene_table = counted.groupby("gene_id", as_index=False).agg(
-        hap1=("hap1", "sum"),
-        hap2=("hap2", "sum"),
-        totalCount=("totalCount", "sum"),
-        positions=("position", "size"))
+    gene_table = summarize_haplotypes(counted)
     haplotype_imbalance(gene_table)
 
     logging.info(f"Exporting data to file {args.output_file}.")
@@ -81,7 +86,7 @@ def filter_genotypes(genotyped):
 
 
 def get_genotypes(vcf_path, requested_sample=None, bam_name=None):
-    logging.info("Reading GT info.")
+    logging.info("Reading GT and phase-set information.")
     gts_list = []
     open_vcf = gzip.open if str(vcf_path).endswith(".gz") else open
     sample_column = None
@@ -110,9 +115,16 @@ def get_genotypes(vcf_path, requested_sample=None, bam_name=None):
             gt_index = format_keys.index("GT")
             if gt_index >= len(sample_values):
                 continue
-            gts_list.append([int(fields[1]), fields[0], sample_values[gt_index]])
+            phase_set = "."
+            if "PS" in format_keys:
+                ps_index = format_keys.index("PS")
+                if ps_index < len(sample_values) and sample_values[ps_index] not in {"", "."}:
+                    phase_set = sample_values[ps_index]
+            gts_list.append([
+                int(fields[1]), fields[0], sample_values[gt_index], phase_set
+            ])
 
-    return pd.DataFrame(gts_list, columns=["position", "contig", "GT"])
+    return pd.DataFrame(gts_list, columns=["position", "contig", "GT", "PS"])
 
 
 def select_sample(samples, requested_sample=None, bam_name=None):
@@ -141,6 +153,21 @@ def count_hap(hap_df):
     hap_df.loc[hap_df["GT"] == "1|0", "hap2"] = hap_df["refCount"] 
     hap_df = hap_df.astype({"hap1": int, "hap2": int})
     return hap_df
+
+
+def summarize_haplotypes(counted):
+    phase_sets_per_gene = counted.groupby("gene_id")["PS"].nunique()
+    split_genes = phase_sets_per_gene[phase_sets_per_gene > 1]
+    if not split_genes.empty:
+        logging.warning(
+            "%s genes span multiple phase sets and will produce one row per phase set.",
+            len(split_genes))
+
+    return counted.groupby(["gene_id", "PS"], as_index=False).agg(
+        hap1=("hap1", "sum"),
+        hap2=("hap2", "sum"),
+        totalCount=("totalCount", "sum"),
+        positions=("position", "size")).rename(columns={"PS": "phase_set"})
 
 
 def haplotype_imbalance(gene_table):

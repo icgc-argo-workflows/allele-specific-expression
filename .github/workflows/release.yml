@@ -22,6 +22,7 @@ jobs:
     needs:
       - tests
       - container
+      - publish-container
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -42,3 +43,34 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "${GITHUB_REF_NAME}" --generate-notes --verify-tag
+
+  publish-container:
+    name: Publish container to GHCR
+    needs:
+      - tests
+      - container
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          lfs: false
+
+      - name: Build and publish image
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGE_NAME: ghcr.io/${{ github.repository }}
+        run: |
+          version="$(tr -d '\r\n' < VERSION)"
+          printf '%s' "${GH_TOKEN}" | docker login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
+          docker build \
+            --build-arg "PIPELINE_VERSION=${version}" \
+            --tag "${IMAGE_NAME}:${version}" \
+            --tag "${IMAGE_NAME}:latest" \
+            .
+          docker push "${IMAGE_NAME}:${version}"
+          docker push "${IMAGE_NAME}:latest"

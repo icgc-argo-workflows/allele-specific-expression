@@ -17,10 +17,12 @@ from scripts.hap_table import (
     get_genotypes,
     haplotype_imbalance,
     select_sample,
+    summarize_haplotypes,
     write_empty_table,
 )
 from scripts.validate_inputs import (
     validate_alignment_contigs,
+    validate_sample_identity,
     validate_vcf_contigs,
 )
 
@@ -141,7 +143,7 @@ class HaplotypeTests(unittest.TestCase):
     def test_vcf_reader_uses_selected_sample(self):
         vcf = """##fileformat=VCFv4.2
 #CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\ts1\ts2
-1\t10\t.\tA\tG\t.\tPASS\t.\tGT:DP\t0|1:20\t1|0:18
+1\t10\t.\tA\tG\t.\tPASS\t.\tGT:PS:DP\t0|1:10:20\t1|0:20:18
 """
         with tempfile.TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "test.vcf"
@@ -150,7 +152,22 @@ class HaplotypeTests(unittest.TestCase):
             result = get_genotypes(path, requested_sample="s2")
 
         self.assertEqual(result.to_dict("records"), [
-            {"position": 10, "contig": "1", "GT": "1|0"}])
+            {"position": 10, "contig": "1", "GT": "1|0", "PS": "20"}])
+
+    def test_haplotype_summary_keeps_phase_sets_separate(self):
+        counted = pd.DataFrame({
+            "gene_id": ["g1", "g1"],
+            "PS": ["100", "200"],
+            "position": [100, 200],
+            "hap1": [10, 2],
+            "hap2": [2, 10],
+            "totalCount": [12, 12],
+        })
+
+        result = summarize_haplotypes(counted)
+
+        self.assertEqual(result["phase_set"].tolist(), ["100", "200"])
+        self.assertEqual(result["hap1"].tolist(), [10, 2])
 
     def test_empty_haplotype_table_is_still_created(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -181,6 +198,19 @@ class InputValidationTests(unittest.TestCase):
             validate_vcf_contigs(
                 {"chr2": 300}, {"chr2"}, {"chr1": 200},
                 {"chr1": 200, "chr2": 300}
+            )
+
+    def test_sample_identity_uses_read_group_sample(self):
+        selected = validate_sample_identity(
+            {"sample-a"}, ["sample-a", "sample-b"], bam_name="file-name"
+        )
+
+        self.assertEqual(selected, "sample-a")
+
+    def test_sample_identity_mismatch_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "does not match alignment"):
+            validate_sample_identity(
+                {"sample-a"}, ["sample-b"], bam_name="file-name"
             )
 
 

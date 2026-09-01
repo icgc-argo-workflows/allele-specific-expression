@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use Pipeline-ASE, please cite the associated PCAWG publication."
+title: "Pipeline Allele Specific Expression"
+type: software
+authors:
+  - family-names: "Streck"
+    given-names: "Adam"
+    email: "adam.streck@iccb-cologne.org"
+repository-code: "https://github.com/schwarzlab-ccb/pipeline-ase"
+url: "https://github.com/schwarzlab-ccb/pipeline-ase"
+license: MIT
+version: 1.0.0
+date-released: 2026-08-31
+preferred-citation:
+  type: article
+  authors:
+    - name: "PCAWG Transcriptome Core Group"
+    - family-names: "Calabrese"
+      given-names: "Claudia"
+    - family-names: "Davidson"
+      given-names: "Natalie R."
+  title: "Genomic basis for RNA alterations in cancer"
+  journal: "Nature"
+  volume: 578
+  start: 129
+  end: 136
+  year: 2020
+  doi: "10.1038/s41586-020-1970-0"
