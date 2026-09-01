@@ -2,6 +2,7 @@ matplotlib==3.9.4
 numpy==2.2.6
 pandas==2.2.3
 pyensembl==2.6.7
+pymarkdownlnt==0.9.39
 ruff==0.15.11
 scipy==1.14.1
 statsmodels==0.14.4

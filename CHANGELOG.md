@@ -13,6 +13,7 @@ uses [Semantic Versioning](https://semver.org/).
 - Phase-set-aware haplotype aggregation, VCF/BAM sample identity checks, and explicit biallelic SNV filtering.
 - Run provenance outputs, reproducible Linux dependency locking, citation metadata, and a populated MIT license.
 - Release container publication to GitHub Container Registry.
+- Automated Markdown linting for the README and changelog.
 
 ### Fixed
 

@@ -1,0 +1,7 @@
+plugins:
+  MD007:
+    indent: 4
+  MD013:
+    enabled: false
+  MD024:
+    siblings_only: true

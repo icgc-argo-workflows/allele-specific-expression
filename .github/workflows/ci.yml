@@ -38,6 +38,9 @@ jobs:
       - name: Lint Python sources
         run: ruff check scripts tests
 
+      - name: Lint Markdown documentation
+        run: pymarkdown --strict-config scan README.md CHANGELOG.md
+
       - name: Compile Python sources
         run: python -m compileall -q scripts tests
 
